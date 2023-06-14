@@ -23,6 +23,8 @@ set(PROJECT_SOURCES
         mainwindow.cpp
         mainwindow.h
         mainwindow.ui
+        database.h
+        database.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
