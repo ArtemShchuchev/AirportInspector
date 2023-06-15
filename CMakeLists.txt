@@ -64,6 +64,17 @@ if(WIN32)    # Для Windows
                                                     libintl-9
                                                     libpq
                                                     libssl-3-x64)
+#    MESSAGE( STATUS "File copy: " "${CMAKE_CURRENT_SOURCE_DIR}/config.ini" )
+#    MESSAGE( STATUS "copy to...: " "${CMAKE_CURRENT_BINARY_DIR}" )
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/config.ini
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+#    add_custom_command(
+#        TARGET ${PROJECT_NAME} POST_BUILD                   # PRE_BUILD | PRE_LINK | POST_BUILD
+#        COMMAND ${CMAKE_COMMAND} -E copy_if_different       # which executes "cmake - E copy_if_different..."
+#                "${CMAKE_CURRENT_SOURCE_DIR}/config.ini"    # <--this is in-file
+#                "${CMAKE_CURRENT_BINARY_DIR}"               # <--this is out-file path
+#        COMMAND_EXPAND_LISTS
+#        COMMENT "-= Copying config.ini file to work folder =-")
 elseif(UNIX)
     target_link_libraries(${PROJECT_NAME} PRIVATE   Qt${QT_VERSION_MAJOR}::Widgets
                                                     Qt${QT_VERSION_MAJOR}::Concurrent
