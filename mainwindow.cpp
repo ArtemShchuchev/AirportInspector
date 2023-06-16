@@ -16,20 +16,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pb_busyAirport->setEnabled(false);
 
     db = new DataBase(this);
-
     setup = new Setup();
-    qDebug() << "Имя хоста: " << setup->getConnData()->hostName;
 
-    tuneMainWindow* tmw = setup->restoreMainWindow();
-    setGeometry(tmw->geometry);
-    if (tmw->maximized){
-        showMaximized();
-    }
+    setup->restoreGeometryWidget(this); // восстанавливаю геометрию mainwindow
 }
 
 MainWindow::~MainWindow()
 {
-    setup->saveMainWindow(geometry(), isMaximized());
+    setup->saveGeometryWidget(this); // сохраняю геометрию mainwindow
     delete setup;
     delete ui;
 }

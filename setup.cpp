@@ -1,9 +1,10 @@
 #include "setup.h"
+//#include "ui_mainwindow.h"
 
 Setup::Setup()
 {
     set = new QSettings("config.ini", QSettings::IniFormat);
-    loadFromConfig();
+    loadDbConnData();
 }
 
 Setup::~Setup()
@@ -11,26 +12,39 @@ Setup::~Setup()
     delete set;
 }
 
-void Setup::saveToConfig()
+void Setup::saveDbConnData()
 {
-    set->beginGroup("Settings_DataBase");
+    set->beginGroup("DbConnData");
+
     set->setValue("hostName", dbConnData.hostName);
     set->setValue("dbName", dbConnData.dbName);
     set->setValue("login", dbConnData.login);
     set->setValue("pass", dbConnData.pass);
     set->setValue("port", dbConnData.port);
+
     set->endGroup();
 }
 
-void Setup::loadFromConfig()
+void Setup::loadDbConnData()
 {
-    set->beginGroup("Settings_DataBase");
-    dbConnData.hostName = set->value("hostName").toString();
-    dbConnData.dbName = set->value("dbName").toString();
-    dbConnData.login = set->value("login").toString();
-    dbConnData.pass = set->value("pass").toString();
-    dbConnData.port = set->value("port").toInt();
+    set->beginGroup("DbConnData");
+    bool exist(set->contains("hostName") &&
+               set->contains("dbName") &&
+               set->contains("login") &&
+               set->contains("pass") &&
+               set->contains("port"));
+
+    dbConnData.hostName = set->value("hostName", "981757-ca08998.tmweb.ru").toString();
+    dbConnData.dbName = set->value("dbName", "netology_cpp").toString();
+    dbConnData.login = set->value("login", "netology_usr_cpp").toString();
+    dbConnData.pass = set->value("pass", "CppNeto3").toString();
+    dbConnData.port = set->value("port", 5432).toInt();
+
     set->endGroup();
+
+    if (exist == false){
+        saveDbConnData();
+    }
 }
 
 ConnectData *Setup::getConnData()
@@ -38,25 +52,28 @@ ConnectData *Setup::getConnData()
     return &dbConnData;
 }
 
-void Setup::saveMainWindow(QRect geometry, bool maximized)
+void Setup::saveGeometryWidget(const QWidget *widget)
 {
-    set->beginGroup("mainwindow");
-    if (maximized){
-        set->setValue("maximized", maximized);
-    }
-    else{
-        set->setValue("geometry", geometry);
-        set->setValue("maximized", maximized);
+    set->beginGroup(widget->windowTitle());
+
+    bool maximized(widget->isMaximized());
+    set->setValue("maximized", maximized);
+    if (maximized == false){
+        set->setValue("geometry", widget->geometry());
     }
 
     set->endGroup();
 }
 
-tuneMainWindow *Setup::restoreMainWindow()
+void Setup::restoreGeometryWidget(QWidget *widget)
 {
-    set->beginGroup("mainwindow");
-    tuneMW.geometry = set->value("geometry").toRect();
-    tuneMW.maximized = set->value("maximized").toBool();
+    set->beginGroup(widget->windowTitle());
+
+    widget->setGeometry(set->value("geometry", QRect(0, 0, 561, 528)).toRect());
+    bool maximized(set->value("maximized", false).toBool());
+    if (maximized){
+        widget->showMaximized();
+    }
+
     set->endGroup();
-    return &tuneMW;
 }

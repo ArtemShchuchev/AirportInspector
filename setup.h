@@ -6,6 +6,8 @@
 #include <QSize>
 #include <QPoint>
 #include <QRect>
+#include <QWidget>
+#include <QDebug>
 
 
 //#define POSTGRE_DRIVER "QPSQL"
@@ -22,12 +24,6 @@ struct ConnectData
     uint16_t port;
 };
 
-struct tuneMainWindow
-{
-    QRect geometry;
-    bool maximized;
-};
-
 
 class Setup
 {
@@ -37,16 +33,15 @@ private:
     QString dbName;
     const uint8_t sizeConnData = 5;
     ConnectData dbConnData;
-    tuneMainWindow tuneMW;
 
 public:
     Setup();
     ~Setup();
-    void saveToConfig();
-    void loadFromConfig();
+    void saveDbConnData();
+    void loadDbConnData();
     ConnectData *getConnData();
-    void saveMainWindow(QRect geometry, bool);
-    tuneMainWindow *restoreMainWindow();
+    void saveGeometryWidget(const QWidget *widget);
+    void restoreGeometryWidget(QWidget *widget);
 };
 
 #endif // SETUP_H
