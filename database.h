@@ -6,27 +6,43 @@
 #include <QSqlError>
 #include <QSqlDatabase>
 #include <QDebug>
+#include <QDate>
+#include "setup.h"
 
+enum RequestType
+{
+    requestNull,
+    requestListAirports,
+    requestInAirplans,
+    requestOutAirplans,
+    requestStatisticEveryMonth,
+    requestStatisticEveryDay
+};
 
 class DataBase : public QObject
 {
     Q_OBJECT
+
 public:
-    explicit DataBase(QObject *parent = nullptr);
+    explicit DataBase(const QString &driver, QObject *parent = nullptr);
     ~DataBase();
 
-    void DisconnectFromDataBase(const QString& nameDb = "");
-    void RequestToDB(int requestIndex);
-    void ConnectToDataBase(const QVector<QString>& dataForConnect);
-    QSqlError GetLastError(void);
+    void disconnectFromDataBase();
+    void requestToDB(const RequestType reqType,
+                     const QString &airportCode = "", const QDate data = QDate(0, 0, 0));
+    void connectToDataBase(const ConnectData &dbConnData);
+    QSqlError getLastError();
+    QSqlQueryModel* getModel();
 
 private:
-    void AddDataBase(const QString& driver, const QString& nameDB = "");
-
     QSqlDatabase* db;
+    QSqlQueryModel* model;
+
+    void addDataBase(const QString &driver);
 
 signals:
-
+   void sig_SendStatusConnection(bool);
+   void sig_SendStatusRequest(const QString& err);
 };
 
 #endif // DATABASE_H

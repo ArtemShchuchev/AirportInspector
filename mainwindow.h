@@ -3,7 +3,9 @@
 
 #include <QMainWindow>
 #include <QDate>
-//#include <QMessageBox>"
+#include <QMessageBox>
+#include <QtConcurrent>
+#include <QTimer>
 
 #include "database.h"
 #include "setup.h"
@@ -20,13 +22,26 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    void ScreenDataFromDB();
+
+public slots:
+
+
 private slots:
+    void ReceiveStatusConnectionToDB(bool status);
+    void connectToDB();
+    void ReceiveStatusRequestToDB(const QString &err);
+
+    void on_pb_reciveRace_clicked();
 
 private:
     Ui::MainWindow *ui;
 
-    QDate data;
-    DataBase* db;
-    Setup* setup;
+    DataBase *db;
+    Setup *setup;
+    QMessageBox *msg;
+    const QString   CONNECT_str = "Подключено",
+                    NOT_CONNECT_str = "Отключено";
+    RequestType reqType;
 };
 #endif // MAINWINDOW_H

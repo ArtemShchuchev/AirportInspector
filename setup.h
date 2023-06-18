@@ -8,10 +8,7 @@
 #include <QRect>
 #include <QWidget>
 #include <QDebug>
-
-
-//#define POSTGRE_DRIVER "QPSQL"
-//#define DB_NAME "MyDB"
+#include <QDate>
 
 
 // Структура полей подключения к БД
@@ -28,18 +25,16 @@ struct ConnectData
 class Setup
 {
 private:
-    QSettings* set;
-    QString dbDriver;
-    QString dbName;
-    const uint8_t sizeConnData = 5;
-    ConnectData dbConnData;
+    QSettings* setting;
+
+    void saveDbConnData(ConnectData &dbConnData);
 
 public:
     Setup();
     ~Setup();
-    void saveDbConnData();
-    void loadDbConnData();
-    ConnectData *getConnData();
+
+    const ConnectData getConnData();
+    const QString getDbDriver();
     void saveGeometryWidget(const QWidget *widget);
     void restoreGeometryWidget(QWidget *widget);
 };

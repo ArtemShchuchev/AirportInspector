@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Инспектор аэропортов</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QTableView" name="tableView">
@@ -50,12 +50,12 @@
      <string>Выбор аэропорта</string>
     </property>
    </widget>
-   <widget class="QLabel" name="lb_status">
+   <widget class="QLabel" name="lb_statusConnect">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>490</y>
-      <width>49</width>
+      <width>301</width>
       <height>16</height>
      </rect>
     </property>
@@ -63,7 +63,7 @@
      <string>TextLabel</string>
     </property>
    </widget>
-   <widget class="QComboBox" name="comboBox">
+   <widget class="QComboBox" name="cb_Airport">
     <property name="geometry">
      <rect>
       <x>320</x>
@@ -166,7 +166,7 @@
      <x>0</x>
      <y>0</y>
      <width>569</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

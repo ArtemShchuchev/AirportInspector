@@ -3,77 +3,96 @@
 
 Setup::Setup()
 {
-    set = new QSettings("config.ini", QSettings::IniFormat);
-    loadDbConnData();
+    setting = new QSettings("config.ini", QSettings::IniFormat);
 }
 
 Setup::~Setup()
 {
-    delete set;
+    delete setting;
 }
 
-void Setup::saveDbConnData()
+void Setup::saveDbConnData(ConnectData &dbConnData)
 {
-    set->beginGroup("DbConnData");
+    setting->beginGroup("DbConnData");
 
-    set->setValue("hostName", dbConnData.hostName);
-    set->setValue("dbName", dbConnData.dbName);
-    set->setValue("login", dbConnData.login);
-    set->setValue("pass", dbConnData.pass);
-    set->setValue("port", dbConnData.port);
+    setting->setValue("hostName", dbConnData.hostName);
+    setting->setValue("dbName", dbConnData.dbName);
+    setting->setValue("login", dbConnData.login);
+    setting->setValue("pass", dbConnData.pass);
+    setting->setValue("port", dbConnData.port);
 
-    set->endGroup();
+    setting->endGroup();
 }
 
-void Setup::loadDbConnData()
+const ConnectData Setup::getConnData()
 {
-    set->beginGroup("DbConnData");
-    bool exist(set->contains("hostName") &&
-               set->contains("dbName") &&
-               set->contains("login") &&
-               set->contains("pass") &&
-               set->contains("port"));
-
-    dbConnData.hostName = set->value("hostName", "981757-ca08998.tmweb.ru").toString();
-    dbConnData.dbName = set->value("dbName", "netology_cpp").toString();
-    dbConnData.login = set->value("login", "netology_usr_cpp").toString();
-    dbConnData.pass = set->value("pass", "CppNeto3").toString();
-    dbConnData.port = set->value("port", 5432).toInt();
-
-    set->endGroup();
+    bool exist;
+    ConnectData dbConnData;
+    setting->sync();    // синхронизирует с фалом прикаждом обращении сюда
+    setting->beginGroup("DbConnData");
+    {
+        exist = (   setting->contains("hostName") &&
+                    setting->contains("dbName") &&
+                    setting->contains("login") &&
+                    setting->contains("pass") &&
+                    setting->contains("port")
+                    );
+        dbConnData.hostName = setting->value("hostName", "981757-ca08998.tmweb.ru").toString();
+        dbConnData.dbName = setting->value("dbName", "demo").toString();
+        dbConnData.login = setting->value("login", "netology_usr_cpp").toString();
+        dbConnData.pass = setting->value("pass", "CppNeto3").toString();
+        dbConnData.port = setting->value("port", 5432).toInt();
+    }
+    setting->endGroup();
 
     if (exist == false){
-        saveDbConnData();
+        saveDbConnData(dbConnData);
     }
+
+    return dbConnData;
 }
 
-ConnectData *Setup::getConnData()
+const QString Setup::getDbDriver()
 {
-    return &dbConnData;
+    const QString grName("dbDriver"),
+            key("postgres");
+
+    setting->beginGroup(grName);
+    bool exist = setting->contains(key);
+    QString dbDriver = setting->value(key, "QPSQL").toString();
+    setting->endGroup();
+
+    if (exist == false){
+        setting->beginGroup(grName);
+        setting->setValue(key, dbDriver);
+        setting->endGroup();
+    }
+
+    return dbDriver;
 }
 
 void Setup::saveGeometryWidget(const QWidget *widget)
 {
-    set->beginGroup(widget->windowTitle());
+    setting->beginGroup(widget->objectName());
 
     bool maximized(widget->isMaximized());
-    set->setValue("maximized", maximized);
+    setting->setValue("maximized", maximized);
     if (maximized == false){
-        set->setValue("geometry", widget->geometry());
+        setting->setValue("geometry", widget->geometry());
     }
 
-    set->endGroup();
+    setting->endGroup();
 }
 
 void Setup::restoreGeometryWidget(QWidget *widget)
 {
-    set->beginGroup(widget->windowTitle());
+    setting->beginGroup(widget->objectName());
 
-    widget->setGeometry(set->value("geometry", QRect(0, 0, 561, 528)).toRect());
-    bool maximized(set->value("maximized", false).toBool());
+    widget->setGeometry(setting->value("geometry", QRect(0, 0, 561, 528)).toRect());
+    bool maximized(setting->value("maximized", false).toBool());
     if (maximized){
         widget->showMaximized();
     }
 
-    set->endGroup();
+    setting->endGroup();
 }
