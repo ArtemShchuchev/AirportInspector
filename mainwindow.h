@@ -34,6 +34,10 @@ private slots:
 
     void on_pb_reciveRace_clicked();
 
+    void on_rb_in_clicked();
+
+    void on_rb_out_clicked();
+
 private:
     Ui::MainWindow *ui;
 

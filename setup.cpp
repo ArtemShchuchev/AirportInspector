@@ -88,7 +88,7 @@ void Setup::restoreGeometryWidget(QWidget *widget)
 {
     setting->beginGroup(widget->objectName());
 
-    widget->setGeometry(setting->value("geometry", QRect(0, 0, 561, 528)).toRect());
+    widget->setGeometry(setting->value("geometry", QRect(0, 0, 490, 330)).toRect());
     bool maximized(setting->value("maximized", false).toBool());
     if (maximized){
         widget->showMaximized();

@@ -27,7 +27,7 @@ void DataBase::disconnectFromDataBase()
     db->close();
 }
 
-void DataBase::requestToDB(const RequestType reqType, const QString &airportCode, const QDate data)
+void DataBase::requestToDB(const RequestType reqType, const QDate data, const QString &airportCode)
 {
     QString request;
     switch (reqType) {
@@ -62,20 +62,18 @@ void DataBase::requestToDB(const RequestType reqType, const QString &airportCode
         break;
 
     case requestStatisticEveryMonth:
-        request = "SELECT count(flight_no), date_trunc('month', scheduled_departure) as \"Month\"\
-                from bookings.flights f\
+        request = "SELECT count(flight_no), date_trunc('month', scheduled_departure) as \"Month\" from bookings.flights f\
                 WHERE (scheduled_departure::date > date('2016-08-31') and\
-                scheduled_departure::date <= date('2017-08-31')) and ( departure_airport =\
-                airportCode or arrival_airport = airportCode )\
+                scheduled_departure::date <= date('2017-08-31')) and\
+                ( departure_airport = 'DYR' or arrival_airport = 'ABA' )\
                 group by \"Month\"";
         break;
 
     case requestStatisticEveryDay:
-        request = "SELECT count(flight_no), date_trunc('day', scheduled_departure) as \"Day\"\
-                from bookings.flights f\
+        request = "SELECT count(flight_no), date_trunc('day', scheduled_departure) as \"Day\" from bookings.flights f\
                 WHERE(scheduled_departure::date > date('2016-08-31') and\
-                scheduled_departure::date <= date('2017-08-31')) and ( departure_airport =\
-                airportCode or arrival_airport = airportCode)\
+                scheduled_departure::date <= date('2017-08-31')) and\
+                ( departure_airport = 'DYR' or arrival_airport = 'ABA')\
                 GROUP BY \"Day\"";
         break;
 

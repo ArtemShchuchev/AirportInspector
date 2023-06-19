@@ -4,7 +4,6 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-//    , modelAirport(nullptr)
     , reqType(requestNull)
 {
     ui->setupUi(this);
@@ -15,7 +14,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Первоначальная настройка виджетов ПИ
     setup->restoreGeometryWidget(this); // восстанавливаю геометрию mainwindow
-    ui->rb_out->setChecked(true);
     ui->fr_radioBt->setEnabled(false);
     ui->dateEdit->setDateRange(QDate(2016, 8, 15), QDate(2017, 9, 14));
     ui->fr_data->setEnabled(false);
@@ -23,6 +21,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pb_busyAirport->setEnabled(false);
     ui->lb_statusConnect->setText(NOT_CONNECT_str);
     ui->lb_statusConnect->setStyleSheet("color:red");
+    ui->lb_data->setFixedWidth(100);
+    ui->rb_out->setChecked(true);
+    on_rb_out_clicked();
 
     connectToDB();
 
@@ -54,7 +55,7 @@ void MainWindow::ScreenDataFromDB()
     case requestInAirplans:
         model->setHeaderData(0, Qt::Horizontal, tr("Номер\nрейса"));
         model->setHeaderData(1, Qt::Horizontal, tr("Время\nприбытия"));
-        model->setHeaderData(2, Qt::Horizontal, tr("Отбытие\nиз города"));
+        model->setHeaderData(2, Qt::Horizontal, tr("Аэропорт\nотправления"));
         ui->tableView->setModel(model);
         // Разрешаем выделение строк
         ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -69,7 +70,7 @@ void MainWindow::ScreenDataFromDB()
     case requestOutAirplans:
         model->setHeaderData(0, Qt::Horizontal, tr("Номер\nрейса"));
         model->setHeaderData(1, Qt::Horizontal, tr("Время\nвылета"));
-        model->setHeaderData(2, Qt::Horizontal, tr("Принимающий\nгород"));
+        model->setHeaderData(2, Qt::Horizontal, tr("Аэропорт\nназначения"));
         ui->tableView->setModel(model);
         // Разрешаем выделение строк
         ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -162,11 +163,25 @@ void MainWindow::on_pb_reciveRace_clicked()
     auto idx = model->index(row, 1);
     QString airportCode = model->data(idx).toString();
 
-    auto reqDb = [this](const RequestType req, const QString &str, const QDate data)
+    auto reqDb = [this](const RequestType req, const QDate data, const QString &str)
     {
-        db->requestToDB(req, str, data);
+        db->requestToDB(req, data, str);
     };
     // Конкаррент - это что то тёмное! (работает как хочу...)
-    auto runRequest = QtConcurrent::run(reqDb, reqType, airportCode, ui->dateEdit->date());
+    auto runRequest = QtConcurrent::run(reqDb, reqType, ui->dateEdit->date(), airportCode);
+}
+
+
+void MainWindow::on_rb_in_clicked()
+{
+    ui->lb_data->setText("Дата прибытия");
+    ui->lb_choiceAirp->setText("Аэропорт прибытия");
+}
+
+
+void MainWindow::on_rb_out_clicked()
+{
+    ui->lb_data->setText("Дата вылета");
+    ui->lb_choiceAirp->setText("Аэропорт отбытия");
 }
 

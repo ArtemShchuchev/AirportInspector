@@ -29,8 +29,8 @@ public:
     ~DataBase();
 
     void disconnectFromDataBase();
-    void requestToDB(const RequestType reqType,
-                     const QString &airportCode = "", const QDate data = QDate(0, 0, 0));
+    void requestToDB(const RequestType reqType, const QDate data = QDate(0, 0, 0),
+                     const QString &airportCode = "");
     void connectToDataBase(const ConnectData &dbConnData);
     QSqlError getLastError();
     QSqlQueryModel* getModel(const RequestType reqType);
