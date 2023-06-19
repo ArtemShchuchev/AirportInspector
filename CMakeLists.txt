@@ -66,8 +66,10 @@ if(WIN32)    # Для Windows
                                                     libssl-3-x64)
 #    MESSAGE( STATUS "File copy: " "${CMAKE_CURRENT_SOURCE_DIR}/config.ini" )
 #    MESSAGE( STATUS "copy to...: " "${CMAKE_CURRENT_BINARY_DIR}" )
-    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/config.ini
-        DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+#    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/config.ini
+#        DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 #    add_custom_command(
 #        TARGET ${PROJECT_NAME} POST_BUILD                   # PRE_BUILD | PRE_LINK | POST_BUILD
 #        COMMAND ${CMAKE_COMMAND} -E copy_if_different       # which executes "cmake - E copy_if_different..."
