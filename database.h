@@ -7,6 +7,7 @@
 #include <QSqlDatabase>
 #include <QDebug>
 #include <QDate>
+#include <QHash>
 #include "setup.h"
 
 enum RequestType
@@ -32,11 +33,11 @@ public:
                      const QString &airportCode = "", const QDate data = QDate(0, 0, 0));
     void connectToDataBase(const ConnectData &dbConnData);
     QSqlError getLastError();
-    QSqlQueryModel* getModel();
+    QSqlQueryModel* getModel(const RequestType reqType);
 
 private:
     QSqlDatabase* db;
-    QSqlQueryModel* model;
+    QHash<RequestType, QSqlQueryModel*> model;
 
     void addDataBase(const QString &driver);
 

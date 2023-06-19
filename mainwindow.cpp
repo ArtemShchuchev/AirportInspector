@@ -4,18 +4,17 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+//    , modelAirport(nullptr)
     , reqType(requestNull)
 {
     ui->setupUi(this);
 
     msg = new QMessageBox(this);
     setup = new Setup();
-    setup->restoreGeometryWidget(this); // восстанавливаю геометрию mainwindow
-
     db = new DataBase(setup->getDbDriver(), this);
-    connectToDB();
 
     // Первоначальная настройка виджетов ПИ
+    setup->restoreGeometryWidget(this); // восстанавливаю геометрию mainwindow
     ui->rb_out->setChecked(true);
     ui->fr_radioBt->setEnabled(false);
     ui->dateEdit->setDateRange(QDate(2016, 8, 15), QDate(2017, 9, 14));
@@ -24,6 +23,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pb_busyAirport->setEnabled(false);
     ui->lb_statusConnect->setText(NOT_CONNECT_str);
     ui->lb_statusConnect->setStyleSheet("color:red");
+
+    connectToDB();
 
     // сигналы
     connect(db, &DataBase::sig_SendStatusConnection, this, &MainWindow::ReceiveStatusConnectionToDB);
@@ -39,28 +40,45 @@ MainWindow::~MainWindow()
 
 void MainWindow::ScreenDataFromDB()
 {
-    QSqlQueryModel *model(db->getModel());
+    QSqlQueryModel *model(db->getModel(reqType));
+
     switch (reqType) {
     case requestListAirports:
         ui->fr_radioBt->setEnabled(true);
         ui->fr_data->setEnabled(true);
         ui->pb_reciveRace->setEnabled(true);
         ui->pb_busyAirport->setEnabled(true);
-
         ui->cb_Airport->setModel(model);
         break;
 
     case requestInAirplans:
-    case requestOutAirplans:
+        model->setHeaderData(0, Qt::Horizontal, tr("Номер\nрейса"));
+        model->setHeaderData(1, Qt::Horizontal, tr("Время\nприбытия"));
+        model->setHeaderData(2, Qt::Horizontal, tr("Отбытие\nиз города"));
         ui->tableView->setModel(model);
         // Разрешаем выделение строк
         ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
         // Устанавливаем режим выделения лишь одной строки в таблице
         ui->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
         // Устанавливаем размер колонок по содержимому
-        ui->tableView->resizeColumnsToContents();
-        ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
         ui->tableView->horizontalHeader()->setStretchLastSection(true);
+        ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        break;
+
+    case requestOutAirplans:
+        model->setHeaderData(0, Qt::Horizontal, tr("Номер\nрейса"));
+        model->setHeaderData(1, Qt::Horizontal, tr("Время\nвылета"));
+        model->setHeaderData(2, Qt::Horizontal, tr("Принимающий\nгород"));
+        ui->tableView->setModel(model);
+        // Разрешаем выделение строк
+        ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+        // Устанавливаем режим выделения лишь одной строки в таблице
+        ui->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
+        // Устанавливаем размер колонок по содержимому
+        ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+        ui->tableView->horizontalHeader()->setStretchLastSection(true);
+        ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
         break;
 
     case requestStatisticEveryMonth:
@@ -78,7 +96,6 @@ void MainWindow::ScreenDataFromDB()
 // показываю статус подключения и при необходимости запускаю еще попытку подключения
 void MainWindow::ReceiveStatusConnectionToDB(bool status)
 {
-
     if(status)
     {
         msg->accept();
@@ -145,7 +162,11 @@ void MainWindow::on_pb_reciveRace_clicked()
     auto idx = model->index(row, 1);
     QString airportCode = model->data(idx).toString();
 
-    auto reqDb = [&]{ db->requestToDB(reqType, airportCode, ui->dateEdit->date()); };
-    auto runRequest = QtConcurrent::run(reqDb);
+    auto reqDb = [this](const RequestType req, const QString &str, const QDate data)
+    {
+        db->requestToDB(req, str, data);
+    };
+    // Конкаррент - это что то тёмное! (работает как хочу...)
+    auto runRequest = QtConcurrent::run(reqDb, reqType, airportCode, ui->dateEdit->date());
 }
 

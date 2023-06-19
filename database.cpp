@@ -1,18 +1,23 @@
 #include "database.h"
 
 DataBase::DataBase(const QString &driver, QObject *parent)
-    : QObject{parent}, model(nullptr)
+    : QObject{parent}
 {
     db = new QSqlDatabase();
-
     addDataBase(driver);
+    for (auto& m : model){
+        m = nullptr;
+    }
 }
 
 DataBase::~DataBase()
 {
     delete db;
-    if (model){
-        delete model;
+    for (auto& m : model){
+        if (m){
+            qDebug() << "Delete: " << m;
+            delete m;
+        }
     }
 }
 
@@ -24,11 +29,6 @@ void DataBase::disconnectFromDataBase()
 
 void DataBase::requestToDB(const RequestType reqType, const QString &airportCode, const QDate data)
 {
-    if (model){
-        delete model;
-        model = nullptr;
-    }
-
     QString request;
     switch (reqType) {
     case requestListAirports:
@@ -45,7 +45,8 @@ void DataBase::requestToDB(const RequestType reqType, const QString &airportCode
                 and f.scheduled_arrival::date = date('"
                 + QString::number(data.year()) + "-"
                 + QString::number(data.month()) + "-"
-                + QString::number(data.day()) + "')";
+                + QString::number(data.day()) + "')\
+                order by \"Name\"";
         break;
 
     case requestOutAirplans:
@@ -56,7 +57,8 @@ void DataBase::requestToDB(const RequestType reqType, const QString &airportCode
                 and f.scheduled_departure::date = date('"
                 + QString::number(data.year()) + "-"
                 + QString::number(data.month()) + "-"
-                + QString::number(data.day()) + "')";
+                + QString::number(data.day()) + "')\
+                order by \"Name\"";
         break;
 
     case requestStatisticEveryMonth:
@@ -81,13 +83,11 @@ void DataBase::requestToDB(const RequestType reqType, const QString &airportCode
         break;
     }
 
-    model = new QSqlQueryModel();
-    model->setQuery(request, *db);
-    //model->setHeaderData(0, Qt::Horizontal, tr("Название фильма"));
-    //model->setHeaderData(1, Qt::Horizontal, tr("Описание фильма"));
-    //model->sort(1, Qt::AscendingOrder);
-
-    auto err = model->lastError().text();
+    if (model.contains(reqType) == false){
+        model.insert(reqType, new QSqlQueryModel());
+    }
+    model.value(reqType)->setQuery(request, *db);
+    auto err = model.value(reqType)->lastError().text();
 
     emit sig_SendStatusRequest(err);
 }
@@ -109,9 +109,9 @@ QSqlError DataBase::getLastError()
     return db->lastError();
 }
 
-QSqlQueryModel *DataBase::getModel()
+QSqlQueryModel *DataBase::getModel(const RequestType reqType)
 {
-    return model;
+    return model.value(reqType, nullptr);
 }
 
 void DataBase::addDataBase(const QString &driver)
