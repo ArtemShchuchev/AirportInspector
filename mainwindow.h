@@ -9,6 +9,7 @@
 
 #include "database.h"
 #include "setup.h"
+#include "graphic.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -33,10 +34,10 @@ private slots:
     void ReceiveStatusRequestToDB(const QString &err);
 
     void on_pb_reciveRace_clicked();
-
     void on_rb_in_clicked();
-
     void on_rb_out_clicked();
+
+    void on_pb_busyAirport_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -44,6 +45,7 @@ private:
     DataBase *db;
     Setup *setup;
     QMessageBox *msg;
+    Graphic *graphic;
     const QString   CONNECT_str = "Подключено",
                     NOT_CONNECT_str = "Отключено";
     RequestType reqType;

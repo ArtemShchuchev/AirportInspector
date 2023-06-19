@@ -27,6 +27,9 @@ set(PROJECT_SOURCES
         database.cpp
         setup.h
         setup.cpp
+        graphic.h
+        graphic.cpp
+        graphic.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

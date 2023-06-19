@@ -9,6 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     msg = new QMessageBox(this);
+    graphic = new Graphic();
     setup = new Setup();
     db = new DataBase(setup->getDbDriver(), this);
 
@@ -34,6 +35,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    delete graphic;
     setup->saveGeometryWidget(this); // сохраняю геометрию mainwindow
     delete setup;
     delete ui;
@@ -183,5 +185,11 @@ void MainWindow::on_rb_out_clicked()
 {
     ui->lb_data->setText("Дата вылета");
     ui->lb_choiceAirp->setText("Аэропорт отбытия");
+}
+
+
+void MainWindow::on_pb_busyAirport_clicked()
+{
+    graphic->show();
 }
 
