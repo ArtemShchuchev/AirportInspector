@@ -1,5 +1,6 @@
 #include "setup.h"
-//#include "ui_mainwindow.h"
+
+Setup setup;
 
 Setup::Setup()
 {
@@ -84,11 +85,11 @@ void Setup::saveGeometryWidget(const QWidget *widget)
     setting->endGroup();
 }
 
-void Setup::restoreGeometryWidget(QWidget *widget)
+void Setup::restoreGeometryWidget(QWidget *widget, const QRect &rect)
 {
     setting->beginGroup(widget->objectName());
 
-    widget->setGeometry(setting->value("geometry", QRect(0, 0, 490, 330)).toRect());
+    widget->setGeometry(setting->value("geometry", rect).toRect());
     bool maximized(setting->value("maximized", false).toBool());
     if (maximized){
         widget->showMaximized();
