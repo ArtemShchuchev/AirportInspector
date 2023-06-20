@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>Graphic</class>
  <widget class="QWidget" name="Graphic">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +14,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Загруженность аэропорта</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -27,27 +30,43 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab_year">
       <attribute name="title">
-       <string>Tab 1</string>
+       <string>Загруженность за год</string>
       </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QGraphicsView" name="gv_barSeries"/>
+       </item>
+      </layout>
      </widget>
      <widget class="QWidget" name="tab_month">
       <attribute name="title">
-       <string>Tab 2</string>
+       <string>Загруженность за месяц</string>
       </attribute>
-      <widget class="QComboBox" name="comboBox">
-       <property name="geometry">
-        <rect>
-         <x>110</x>
-         <y>10</y>
-         <width>111</width>
-         <height>24</height>
-        </rect>
-       </property>
-      </widget>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="0">
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>279</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="0" column="1">
+        <widget class="QComboBox" name="cb_month"/>
+       </item>
+       <item row="1" column="0" colspan="2">
+        <widget class="QGraphicsView" name="gv_lineSeries"/>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>
