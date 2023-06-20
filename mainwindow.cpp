@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "setup.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -10,11 +11,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     msg = new QMessageBox(this);
     graphic = new Graphic();
-    setup = new Setup();
-    db = new DataBase(setup->getDbDriver(), this);
+    //setup = new Setup();
+    db = new DataBase(setup.getDbDriver(), this);
 
     // Первоначальная настройка виджетов ПИ
-    setup->restoreGeometryWidget(this); // восстанавливаю геометрию mainwindow
+    setup.restoreGeometryWidget(this, QRect(0, 0, 520, 330)); // восстанавливаю геометрию mainwindow
     ui->fr_radioBt->setEnabled(false);
     ui->dateEdit->setDateRange(QDate(2016, 8, 15), QDate(2017, 9, 14));
     ui->fr_data->setEnabled(false);
@@ -36,8 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete graphic;
-    setup->saveGeometryWidget(this); // сохраняю геометрию mainwindow
-    delete setup;
+    setup.saveGeometryWidget(this); // сохраняю геометрию mainwindow
     delete ui;
 }
 
@@ -140,7 +140,7 @@ void MainWindow::connectToDB()
     msg->setStandardButtons(QMessageBox::NoButton);
     msg->show();
 
-    auto conDb = [this]{ db->connectToDataBase(setup->getConnData()); };
+    auto conDb = [this]{ db->connectToDataBase(setup.getConnData()); };
     auto runConnect = QtConcurrent::run(conDb);
 }
 

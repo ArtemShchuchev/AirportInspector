@@ -8,7 +8,6 @@
 #include <QTimer>
 
 #include "database.h"
-#include "setup.h"
 #include "graphic.h"
 
 QT_BEGIN_NAMESPACE
@@ -43,7 +42,6 @@ private:
     Ui::MainWindow *ui;
 
     DataBase *db;
-    Setup *setup;
     QMessageBox *msg;
     Graphic *graphic;
     const QString   CONNECT_str = "Подключено",
