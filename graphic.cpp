@@ -8,9 +8,18 @@ Graphic::Graphic(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    barSer = new QBarSeries(this);
-    lineSer = new QLineSeries(this);
+    // Настройка виджета
+    setup.restoreGeometryWidget(this, QRect(0, 0, 400, 300)); // восстанавливаю геометрию виджета
+    setWindowModality(Qt::ApplicationModal);
+    ui->cb_month->addItems(months);
+    ui->cb_month->setCurrentIndex(0);
+    ui->cb_month->setFixedWidth(100);
+    ui->tabWidget->setCurrentIndex(TabYear);
 
+
+    // Объекты построения графиков
+    barSer = new QBarSeries(this);      // столбиковый
+    lineSer = new QLineSeries(this);    // линейный
     // Объект QChart является основным, в котором хранятся все данные графиков
     // и который отвечает за само поле отображения графика, управляет осями,
     // легенодой и прочими атрибутами графика.
@@ -22,26 +31,22 @@ Graphic::Graphic(QWidget *parent) :
     // Размещает виджеты по ячейкам таблицы?!
     layout = new QGridLayout();
     layout->addWidget(chartView);
-    // Устанавливаю менеджер компановки для ui->wid_lineSeries
-//    ui->wid_lineSeries->setLayout(layout);
-//    ui->wid_barSeries->setLayout(layout);
-    tabWidgetChanged(Graphic::TabYear);
+
+
+    //tabWidgetChanged(Graphic::TabYear);
     // график настроен, можно показать
     //chartView->chart()->createDefaultAxes();
-    chartView->show();
+    //chartView->show();
 
-    // Настройка виджета
-    setup.restoreGeometryWidget(this, QRect(0, 0, 400, 300)); // восстанавливаю геометрию виджета
-    setWindowModality(Qt::ApplicationModal);
-    ui->cb_month->addItems(mon);
-    ui->cb_month->setCurrentIndex(0);
-    ui->cb_month->setFixedWidth(100);
-    ui->tabWidget->setCurrentIndex(Graphic::TabYear);
 
 
     connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(clikedClose()));
     connect(ui->cb_month, SIGNAL(activated(int)), this, SLOT(choiseMon(int)));
-    connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabWidgetChanged(int)));
+    //connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(chartPrepear()));
+
+    connect(ui->tabWidget, &QTabWidget::currentChanged, this, [&](int tab){
+        emit sig_requestData(tab);
+    });
 }
 
 Graphic::~Graphic()
@@ -70,14 +75,16 @@ void Graphic::addDataToLine(QVector<double> x, QVector<double> y)
 // Добавляем данные на гистограмму
 void Graphic::addDataToBar(QVector<int> amount)
 {
-    auto amount_it = amount.begin();
-    auto mon_it = mon.begin();
+    int minSize = (months.size() <= amount.size()) ? months.size() : amount.size();
 
-    QList<QBarSet *> listOfColumns(amount.size());
+    QList<QBarSet *> listOfColumns; // столбики гистограммы
+    listOfColumns.reserve(minSize); // резервирую кол-во столбиков
 
-    for (auto &column : listOfColumns){
-        column = new QBarSet(*mon_it++);
-        column->append(*amount_it++);
+    for (int i(0); i < minSize; ++i){
+        // выделяю память под столбики гистограммы
+        listOfColumns.append( new QBarSet(months[i]) );
+        // вношу данные в новые столбики
+        listOfColumns.last()->append(amount[i]);
     }
 
     barSer->append(listOfColumns);
@@ -111,6 +118,41 @@ void Graphic::updateBar()
     chart->addSeries(barSer);
 }
 
+int Graphic::getCurrTab()
+{
+    return ui->tabWidget->currentIndex();
+}
+
+void Graphic::chartPrepear()
+{
+    // 0(TabYear): за год; 1(TabMonth): за месяц.
+    int index = ui->tabWidget->currentIndex();
+
+    if (index == TabYear){
+        QVector<int> am{4, 2, 3, 5, 2, 8, 1, 5, 7, 2, 8, 4};
+        addDataToBar(am);
+        // Устанавливаю менеджер компановки
+        ui->wid_barSeries->setLayout(layout);
+        updateBar();
+        clearLine();
+    }
+    else if (index == TabMonth){
+        QVector<double> x{0, 2, 3, 5}, y{6, 4, 5, 2};
+        addDataToLine(x, y);
+        // Устанавливаю менеджер компановки
+        ui->wid_lineSeries->setLayout(layout);
+        updateLine();
+        clearBar();
+    }
+
+    qDebug() << "graphic show...";
+
+    // график настроен, можно показать
+    //chartView->chart()->createDefaultAxes();
+    //chartView->show();
+    show();
+}
+
 // клик по кнопке "Закрыть" - закроет окно графиков
 void Graphic::clikedClose()
 {
@@ -120,25 +162,5 @@ void Graphic::clikedClose()
 // слот обработки выбора из выпадающего списка месяцев
 void Graphic::choiseMon(int number)
 {
-    qDebug() << number << ": " << mon.at(number);
+    qDebug() << number << ": " << months.at(number);
 }
-
-// смена вкладки на - 0(TabYear): за год; 1(TabMonth): за месяц.
-void Graphic::tabWidgetChanged(int index)
-{
-    if (index == Graphic::TabYear){
-        QVector<int> am{4, 2, 3, 5, 2, 8, 1, 5, 7, 2, 8, 4};
-        addDataToBar(am);
-        ui->wid_barSeries->setLayout(layout);
-        updateBar();
-        clearLine();
-    }
-    else if (index == Graphic::TabMonth){
-        QVector<double> x{0, 2, 3, 5}, y{6, 4, 5, 2};
-        addDataToLine(x, y);
-        ui->wid_lineSeries->setLayout(layout);
-        updateLine();
-        clearBar();
-    }
-}
-

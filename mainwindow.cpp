@@ -8,36 +8,44 @@ MainWindow::MainWindow(QWidget *parent)
     , reqType(requestNull)
 {
     ui->setupUi(this);
+    // восстанавливаю геометрию mainwindow
+    setup.restoreGeometryWidget(this, QRect(0, 0, 520, 330));
 
     msg = new QMessageBox(this);
     graphic = new Graphic();
-    //setup = new Setup();
     db = new DataBase(setup.getDbDriver(), this);
 
+    // сигналы
+    connect(db, &DataBase::sig_SendStatusConnection, this, &MainWindow::receiveStatusConnectionToDB);
+    connect(db, &DataBase::sig_SendStatusRequest, this, &MainWindow::receiveStatusRequestToDB);
+    connect(ui->rb_in, &QRadioButton::toggled, this, [&]{
+        ui->lb_data->setText("Дата прибытия");
+        ui->lb_choiceAirp->setText("Аэропорт прибытия"); });
+    connect(ui->rb_out, &QRadioButton::toggled, this, [&]{
+        ui->lb_data->setText("Дата вылета");
+        ui->lb_choiceAirp->setText("Аэропорт отбытия"); });
+    connect(ui->pb_reciveRace, &QPushButton::clicked, this, &MainWindow::reciveFlightSchedule);
+    connect(ui->pb_busyAirport, &QPushButton::clicked, this, [&]{
+        int tab = graphic->getCurrTab();
+        resiveRequestData(tab);
+    });
+    connect(graphic, &Graphic::sig_requestData, this, &MainWindow::resiveRequestData);
+
     // Первоначальная настройка виджетов ПИ
-    setup.restoreGeometryWidget(this, QRect(0, 0, 520, 330)); // восстанавливаю геометрию mainwindow
-    ui->fr_radioBt->setEnabled(false);
     ui->dateEdit->setDateRange(QDate(2016, 8, 15), QDate(2017, 9, 14));
-    ui->fr_data->setEnabled(false);
-    ui->pb_reciveRace->setEnabled(false);
-    ui->pb_busyAirport->setEnabled(false);
-    ui->lb_statusConnect->setText(NOT_CONNECT_str);
-    ui->lb_statusConnect->setStyleSheet("color:red");
     ui->lb_data->setFixedWidth(100);
-    ui->rb_out->setChecked(true);
-    on_rb_out_clicked();
+    ui->rb_out->toggle(); // Уст. радио-кнопку на "Вылет"
+    setEnableControl(false);
+    setStatusConnectToGUI(false);
 
     connectToDB();
-
-    // сигналы
-    connect(db, &DataBase::sig_SendStatusConnection, this, &MainWindow::ReceiveStatusConnectionToDB);
-    connect(db, &DataBase::sig_SendStatusRequest, this, &MainWindow::ReceiveStatusRequestToDB);
 }
 
 MainWindow::~MainWindow()
 {
-    delete graphic;
     setup.saveGeometryWidget(this); // сохраняю геометрию mainwindow
+
+    delete graphic;
     delete ui;
 }
 
@@ -47,10 +55,7 @@ void MainWindow::ScreenDataFromDB()
 
     switch (reqType) {
     case requestListAirports:
-        ui->fr_radioBt->setEnabled(true);
-        ui->fr_data->setEnabled(true);
-        ui->pb_reciveRace->setEnabled(true);
-        ui->pb_busyAirport->setEnabled(true);
+        setEnableControl(true);
         ui->cb_Airport->setModel(model);
         break;
 
@@ -97,13 +102,13 @@ void MainWindow::ScreenDataFromDB()
 }
 
 // показываю статус подключения и при необходимости запускаю еще попытку подключения
-void MainWindow::ReceiveStatusConnectionToDB(bool status)
+void MainWindow::receiveStatusConnectionToDB(bool status)
 {
+    setStatusConnectToGUI(status);
+
     if(status)
     {
         msg->accept();
-        ui->lb_statusConnect->setText(CONNECT_str);
-        ui->lb_statusConnect->setStyleSheet("color:green");
 
         reqType = requestListAirports;
         auto reqDb = [&]{ db->requestToDB(reqType); };
@@ -112,8 +117,6 @@ void MainWindow::ReceiveStatusConnectionToDB(bool status)
     else
     {
         db->disconnectFromDataBase();
-        ui->lb_statusConnect->setText(NOT_CONNECT_str);
-        ui->lb_statusConnect->setStyleSheet("color:red");
 
         msg->setIcon(QMessageBox::Critical);
         msg->setStyleSheet("color: black");
@@ -129,10 +132,6 @@ void MainWindow::ReceiveStatusConnectionToDB(bool status)
 // пытаемся подключиться к БД
 void MainWindow::connectToDB()
 {
-    if(ui->lb_statusConnect->text() == CONNECT_str){
-        return;
-    }
-
     msg->setIcon(QMessageBox::Information);
     msg->setStyleSheet("color: blue");
     msg->setWindowTitle("Подключение к БД");
@@ -144,7 +143,7 @@ void MainWindow::connectToDB()
     auto runConnect = QtConcurrent::run(conDb);
 }
 
-void MainWindow::ReceiveStatusRequestToDB(const QString &err)
+void MainWindow::receiveStatusRequestToDB(const QString &err)
 {
     if(err != "")
     {
@@ -155,8 +154,8 @@ void MainWindow::ReceiveStatusRequestToDB(const QString &err)
     }
 }
 
-// кнопка: Получить список рейсов
-void MainWindow::on_pb_reciveRace_clicked()
+// Получить расписание рейсов
+void MainWindow::reciveFlightSchedule()
 {
     reqType = (ui->rb_in->isChecked()) ? requestInAirplans : requestOutAirplans;
 
@@ -173,23 +172,59 @@ void MainWindow::on_pb_reciveRace_clicked()
     auto runRequest = QtConcurrent::run(reqDb, reqType, ui->dateEdit->date(), airportCode);
 }
 
-
-void MainWindow::on_rb_in_clicked()
+void MainWindow::resiveRequestData(int currTab)
 {
-    ui->lb_data->setText("Дата прибытия");
-    ui->lb_choiceAirp->setText("Аэропорт прибытия");
+    switch (currTab) {
+    case TabYear:
+        reqType = requestStatisticEveryMonth;
+        break;
+
+    case TabMonth:
+        reqType = requestStatisticEveryDay;
+        break;
+
+    default:
+        break;
+    }
+
+    ///////////////////////////////////////////////////
+    // in/out
+    reqType = (ui->rb_in->isChecked()) ? requestInAirplans : requestOutAirplans;
+
+    auto row = ui->cb_Airport->currentIndex();
+    auto model = ui->cb_Airport->model();
+    auto idx = model->index(row, 1);
+    QString airportCode = model->data(idx).toString();
+
+    auto reqDb = [this](const RequestType req, const QDate data, const QString &str)
+    {
+        db->requestToDB(req, data, str);
+    };
+    // Конкаррент - это что то тёмное! (работает как хочу...)
+    auto runRequest = QtConcurrent::run(reqDb, reqType, ui->dateEdit->date(), airportCode);
 }
 
-
-void MainWindow::on_rb_out_clicked()
+void MainWindow::setStatusConnectToGUI(bool status)
 {
-    ui->lb_data->setText("Дата вылета");
-    ui->lb_choiceAirp->setText("Аэропорт отбытия");
+    QString conn_str, color_str;
+    if(status){
+        conn_str = "Подключено";
+        color_str = "color:green";
+    }
+    else{
+        conn_str = "Отключено";
+        color_str = "color:red";
+    }
+
+    ui->lb_statusConnect->setText(conn_str);
+    ui->lb_statusConnect->setStyleSheet(color_str);
 }
 
-
-void MainWindow::on_pb_busyAirport_clicked()
+void MainWindow::setEnableControl(bool enable)
 {
-    graphic->show();
+    ui->fr_radioBt->setEnabled(enable);
+    ui->fr_data->setEnabled(enable);
+    ui->pb_reciveRace->setEnabled(enable);
+    ui->pb_busyAirport->setEnabled(enable);
 }
 

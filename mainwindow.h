@@ -28,24 +28,20 @@ public slots:
 
 
 private slots:
-    void ReceiveStatusConnectionToDB(bool status);
+    void receiveStatusConnectionToDB(bool status);
     void connectToDB();
-    void ReceiveStatusRequestToDB(const QString &err);
-
-    void on_pb_reciveRace_clicked();
-    void on_rb_in_clicked();
-    void on_rb_out_clicked();
-
-    void on_pb_busyAirport_clicked();
+    void receiveStatusRequestToDB(const QString &err);
+    void reciveFlightSchedule();
+    void resiveRequestData(int currTab);
 
 private:
     Ui::MainWindow *ui;
-
     DataBase *db;
     QMessageBox *msg;
     Graphic *graphic;
-    const QString   CONNECT_str = "Подключено",
-                    NOT_CONNECT_str = "Отключено";
     RequestType reqType;
+
+    void setStatusConnectToGUI(bool status);
+    void setEnableControl(bool enable);
 };
 #endif // MAINWINDOW_H

@@ -62,6 +62,7 @@ void DataBase::requestToDB(const RequestType reqType, const QDate data, const QS
         break;
 
     case requestStatisticEveryMonth:
+        // 12 строчек: кол-во полетов, дата(год-мес-день(01)) - с 2016-09-01
         request = "SELECT count(flight_no), date_trunc('month', scheduled_departure) as \"Month\" from bookings.flights f\
                 WHERE (scheduled_departure::date > date('2016-08-31') and\
                 scheduled_departure::date <= date('2017-08-31')) and\
@@ -70,6 +71,7 @@ void DataBase::requestToDB(const RequestType reqType, const QDate data, const QS
         break;
 
     case requestStatisticEveryDay:
+        // 365 строчек: кол-во полетов, дата(год-мес-день) - с 2016-09-01
         request = "SELECT count(flight_no), date_trunc('day', scheduled_departure) as \"Day\" from bookings.flights f\
                 WHERE(scheduled_departure::date > date('2016-08-31') and\
                 scheduled_departure::date <= date('2017-08-31')) and\

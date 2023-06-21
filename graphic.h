@@ -7,10 +7,17 @@
 #include <QChart>
 #include <QChartView>
 #include <QGridLayout>
+#include <QList>
+#include <QBarSet>
 
 namespace Ui {
 class Graphic;
 }
+
+enum{
+    TabYear,
+    TabMonth
+};
 
 
 class Graphic : public QWidget
@@ -20,10 +27,7 @@ class Graphic : public QWidget
 public:
     explicit Graphic(QWidget *parent = nullptr);
     ~Graphic();
-    enum{
-        TabYear,
-        TabMonth
-    };
+
 
     void addDataToLine(QVector<double> x, QVector<double> y);
     void addDataToBar(QVector<int> amount);
@@ -31,11 +35,14 @@ public:
     void updateLine();
     void clearBar();
     void updateBar();
+    int getCurrTab();
+
+public slots:
+    void chartPrepear();
 
 private slots:
     void clikedClose();
     void choiseMon(int number);
-    void tabWidgetChanged(int index);
 
 private:
     Ui::Graphic *ui;
@@ -45,7 +52,7 @@ private:
 
     QBarSeries *barSer;
     QLineSeries *lineSer;
-    const QStringList mon{
+    const QStringList months{
         "Январь",
         "Февраль",
         "Март",
@@ -58,6 +65,9 @@ private:
         "Октябрь",
         "Ноябрь",
         "Декабрь" };
+
+signals:
+    void sig_requestData(int currTab);
 };
 
 #endif // GRAPHIC_H
