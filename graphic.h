@@ -30,7 +30,7 @@ public:
 
 
     void addDataToLine(QVector<double> x, QVector<double> y);
-    void addDataToBar(QVector<int> amount);
+    void addDataToBar(QMap<QDate, int> &statistic);
     void clearLine();
     void updateLine();
     void clearBar();

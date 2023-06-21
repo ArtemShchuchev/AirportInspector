@@ -90,7 +90,36 @@ void MainWindow::ScreenDataFromDB()
         break;
 
     case requestStatisticEveryMonth:
+    {
+        // 12 строчек: кол-во полетов, дата(год-мес-день(01)) - с 2016-09-01
+        QMap<QDate, int> statistic;
+        int rowMax(model->rowCount());
+
+        for (int row(0); row < rowMax; ++row){
+            auto keyIdx = model->index(row, 1);
+            auto dataIdx = model->index(row, 0);
+
+            QDate key = model->data(keyIdx).toDate();
+            int data = model->data(dataIdx).toInt();
+
+            statistic.insert(key, data);
+        }
+
+        graphic->addDataToBar(statistic);
+        graphic->chartPrepear();
+
+//        auto it = statistic.begin();
+//        auto endit = statistic.end();
+//        for ( ; it != endit; ++it){
+//            qDebug() << it.key() << " : " << it.value();
+//        }
+
+//        for (const auto& s : statistic){
+//            qDebug() << s;
+//        }
+
         break;
+    }
 
     case requestStatisticEveryDay:
         break;
@@ -159,49 +188,50 @@ void MainWindow::reciveFlightSchedule()
 {
     reqType = (ui->rb_in->isChecked()) ? requestInAirplans : requestOutAirplans;
 
-    auto row = ui->cb_Airport->currentIndex();
-    auto model = ui->cb_Airport->model();
-    auto idx = model->index(row, 1);
-    QString airportCode = model->data(idx).toString();
+    auto row = ui->cb_Airport->currentIndex();          // номер строчки из comboBox
+    auto model = ui->cb_Airport->model();               // модель из comboBox
+    auto idx = model->index(row, 1);                    // нахожу индекс, нужной ячейки (код аэропорта)
+    QString airportCode = model->data(idx).toString();  // наконец получаю код аэропорта
 
-    auto reqDb = [this](const RequestType req, const QDate data, const QString &str)
+    auto reqDb = [this](const RequestType req, const QString &str, const QDate data)
     {
-        db->requestToDB(req, data, str);
+        db->requestToDB(req, str, data);
     };
     // Конкаррент - это что то тёмное! (работает как хочу...)
-    auto runRequest = QtConcurrent::run(reqDb, reqType, ui->dateEdit->date(), airportCode);
+    auto runRequest = QtConcurrent::run(reqDb, reqType, airportCode, ui->dateEdit->date());
 }
 
+// Получил запрос на данные для графиков
+// принимает индекс текущей вкладки (currTab)
 void MainWindow::resiveRequestData(int currTab)
 {
     switch (currTab) {
     case TabYear:
         reqType = requestStatisticEveryMonth;
         break;
-
     case TabMonth:
         reqType = requestStatisticEveryDay;
         break;
-
     default:
+        reqType = requestNull;
         break;
     }
 
     ///////////////////////////////////////////////////
-    // in/out
-    reqType = (ui->rb_in->isChecked()) ? requestInAirplans : requestOutAirplans;
 
-    auto row = ui->cb_Airport->currentIndex();
-    auto model = ui->cb_Airport->model();
-    auto idx = model->index(row, 1);
-    QString airportCode = model->data(idx).toString();
+    auto row = ui->cb_Airport->currentIndex();          // номер строчки из comboBox
+    auto model = ui->cb_Airport->model();               // модель из comboBox
+    auto idx = model->index(row, 1);                    // нахожу индекс, нужной ячейки (код аэропорта)
+    QString airportCode = model->data(idx).toString();  // наконец получаю код аэропорта
 
-    auto reqDb = [this](const RequestType req, const QDate data, const QString &str)
+    qDebug() << airportCode;
+
+    auto reqDb = [this](const RequestType req, const QString &str)
     {
-        db->requestToDB(req, data, str);
+        db->requestToDB(req, str);
     };
     // Конкаррент - это что то тёмное! (работает как хочу...)
-    auto runRequest = QtConcurrent::run(reqDb, reqType, ui->dateEdit->date(), airportCode);
+    auto runRequest = QtConcurrent::run(reqDb, reqType, airportCode);
 }
 
 void MainWindow::setStatusConnectToGUI(bool status)

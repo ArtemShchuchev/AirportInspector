@@ -42,11 +42,11 @@ Graphic::Graphic(QWidget *parent) :
 
     connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(clikedClose()));
     connect(ui->cb_month, SIGNAL(activated(int)), this, SLOT(choiseMon(int)));
-    //connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(chartPrepear()));
+    connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(chartPrepear()));
 
-    connect(ui->tabWidget, &QTabWidget::currentChanged, this, [&](int tab){
-        emit sig_requestData(tab);
-    });
+//    connect(ui->tabWidget, &QTabWidget::currentChanged, this, [&](int tab){
+//        emit sig_requestData(tab);
+//    });
 }
 
 Graphic::~Graphic()
@@ -73,18 +73,20 @@ void Graphic::addDataToLine(QVector<double> x, QVector<double> y)
 }
 
 // Добавляем данные на гистограмму
-void Graphic::addDataToBar(QVector<int> amount)
+void Graphic::addDataToBar(QMap<QDate, int> &statistic)
 {
-    int minSize = (months.size() <= amount.size()) ? months.size() : amount.size();
-
     QList<QBarSet *> listOfColumns; // столбики гистограммы
-    listOfColumns.reserve(minSize); // резервирую кол-во столбиков
 
-    for (int i(0); i < minSize; ++i){
+    auto endit = statistic.end();
+    for (auto it = statistic.begin(); it != endit; ++it){
+        QString mon = months[it.key().month() - 1] + " " + QString::number(it.key().year());
+
         // выделяю память под столбики гистограммы
-        listOfColumns.append( new QBarSet(months[i]) );
+        listOfColumns.append( new QBarSet(mon) );
         // вношу данные в новые столбики
-        listOfColumns.last()->append(amount[i]);
+        listOfColumns.last()->append(it.value());
+
+        qDebug() << mon << " : " << it.value();
     }
 
     barSer->append(listOfColumns);
@@ -107,7 +109,7 @@ void Graphic::updateLine()
 
 void Graphic::clearBar()
 {
-    barSer->clear();
+    //barSer->clear();
     if (chart->series().contains(barSer)){
         chart->removeSeries(barSer);
     }
@@ -129,8 +131,8 @@ void Graphic::chartPrepear()
     int index = ui->tabWidget->currentIndex();
 
     if (index == TabYear){
-        QVector<int> am{4, 2, 3, 5, 2, 8, 1, 5, 7, 2, 8, 4};
-        addDataToBar(am);
+//        QVector<int> am{4, 2, 3, 5, 2, 8, 1, 5, 7, 2, 8, 4};
+//        addDataToBar(am);
         // Устанавливаю менеджер компановки
         ui->wid_barSeries->setLayout(layout);
         updateBar();
