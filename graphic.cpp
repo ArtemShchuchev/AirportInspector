@@ -11,11 +11,10 @@ Graphic::Graphic(QWidget *parent) :
     // Настройка виджета
     setup.restoreGeometryWidget(this, QRect(0, 0, 400, 300)); // восстанавливаю геометрию виджета
     setWindowModality(Qt::ApplicationModal);
-    ui->cb_month->addItems(months);
+    //ui->cb_month->addItems(MONTH_RUS);
     ui->cb_month->setCurrentIndex(0);
-    ui->cb_month->setFixedWidth(100);
+    ui->cb_month->setFixedWidth(120);
     ui->tabWidget->setCurrentIndex(TabYear);
-
 
     // Объекты построения графиков
     barSer = new QBarSeries(this);      // столбиковый
@@ -42,11 +41,7 @@ Graphic::Graphic(QWidget *parent) :
 
     connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(clikedClose()));
     connect(ui->cb_month, SIGNAL(activated(int)), this, SLOT(choiseMon(int)));
-    connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(chartPrepear()));
-
-//    connect(ui->tabWidget, &QTabWidget::currentChanged, this, [&](int tab){
-//        emit sig_requestData(tab);
-//    });
+    connect(ui->tabWidget, &QTabWidget::currentChanged, this, &Graphic::choiceTab);
 }
 
 Graphic::~Graphic()
@@ -58,66 +53,44 @@ Graphic::~Graphic()
 }
 
 // Добавляем данные на график
-void Graphic::addDataToLine(QVector<double> x, QVector<double> y)
+void Graphic::addDataToLine(QMap<QDate, int> &statistic, QString &airportName)
 {
-    // Зададим размер графика, т.е. количество точек.
-    // Необходимо, чтобы х и у были равны.
-    // РАВНЫ, т.к. каждой точке соотв. 1ин "x" и 1ин "y", т.е. пара координат
-    uint32_t size = (x.size() >= y.size()) ? y.size() : x.size();
+    this->airportName = airportName;
+    statYearOfDay = qMove(statistic);
 
-    // Добавление точек в серию.
-    for(uint32_t i(0); i < size; ++i)
-    {
-        lineSer->append(x[i],y[i]);
-    }
+    QDate date = statYearOfDay.begin().key();  // начальная дата из получ. данных
+    // Наполняю comboBox полученными данными
+    // выбираю даты кратные месяцам
+    do{
+        QString date_str = MONTH_RUS.at(date.month() - 1) + " " + QString::number(date.year());
+        ui->cb_month->addItem(date_str);
+        date = date.addMonths(1);
+    }while(statYearOfDay.find(date) != statYearOfDay.end());
+
+
+    int dateIdx = ui->cb_month->currentIndex(); // индекс даты из comboBox
+    choiseMon(dateIdx);
 }
 
 // Добавляем данные на гистограмму
-void Graphic::addDataToBar(QMap<QDate, int> &statistic)
+void Graphic::addDataToBar(QMap<QDate, int> &statistic, QString &airportName)
 {
+    this->airportName = airportName;
     QList<QBarSet *> listOfColumns; // столбики гистограммы
 
-    auto endit = statistic.end();
-    for (auto it = statistic.begin(); it != endit; ++it){
-        QString mon = months[it.key().month() - 1] + " " + QString::number(it.key().year());
+    for (auto it = statistic.begin(); it != statistic.end(); ++it){
+        auto date = it.key();
+        QString date_str = MONTH_RUS.at(date.month() - 1) + " " + QString::number(date.year());
 
         // выделяю память под столбики гистограммы
-        listOfColumns.append( new QBarSet(mon) );
+        listOfColumns.append( new QBarSet(date_str) );
         // вношу данные в новые столбики
         listOfColumns.last()->append(it.value());
 
-        qDebug() << mon << " : " << it.value();
+        //qDebug() << date_str << " : " << it.value();
     }
 
     barSer->append(listOfColumns);
-}
-
-// Очищаем данные на графике
-void Graphic::clearLine()
-{
-    lineSer->clear();
-    if (chart->series().contains(lineSer)){
-        chart->removeSeries(lineSer);
-    }
-}
-
-// Добавляем серию к графику
-void Graphic::updateLine()
-{
-    chart->addSeries(lineSer);
-}
-
-void Graphic::clearBar()
-{
-    //barSer->clear();
-    if (chart->series().contains(barSer)){
-        chart->removeSeries(barSer);
-    }
-}
-
-void Graphic::updateBar()
-{
-    chart->addSeries(barSer);
 }
 
 int Graphic::getCurrTab()
@@ -127,24 +100,29 @@ int Graphic::getCurrTab()
 
 void Graphic::chartPrepear()
 {
+    ui->lb_airportName->setText("Аэропорт \"" + airportName + "\"");
     // 0(TabYear): за год; 1(TabMonth): за месяц.
     int index = ui->tabWidget->currentIndex();
 
     if (index == TabYear){
-//        QVector<int> am{4, 2, 3, 5, 2, 8, 1, 5, 7, 2, 8, 4};
-//        addDataToBar(am);
         // Устанавливаю менеджер компановки
         ui->wid_barSeries->setLayout(layout);
-        updateBar();
-        clearLine();
+
+        if (chart->series().contains(lineSer)){
+            chart->removeSeries(lineSer);
+        }
+
+        chart->addSeries(barSer); // Добавляем серию к графику
     }
     else if (index == TabMonth){
-        QVector<double> x{0, 2, 3, 5}, y{6, 4, 5, 2};
-        addDataToLine(x, y);
         // Устанавливаю менеджер компановки
         ui->wid_lineSeries->setLayout(layout);
-        updateLine();
-        clearBar();
+
+        if (chart->series().contains(barSer)){
+            chart->removeSeries(barSer);
+        }
+
+        chart->addSeries(lineSer); // Добавляем серию к графику
     }
 
     qDebug() << "graphic show...";
@@ -158,11 +136,64 @@ void Graphic::chartPrepear()
 // клик по кнопке "Закрыть" - закроет окно графиков
 void Graphic::clikedClose()
 {
+    // если серия не пустая - очистить данные
+    if (barSer->count()){
+        barSer->clear();
+    }
+    // если серия не пустая - очистить данные
+    if (lineSer->count()){
+        lineSer->clear();
+    }
+    if (chart->series().contains(lineSer)){
+        chart->removeSeries(lineSer);
+    }
+    if (chart->series().contains(barSer)){
+        chart->removeSeries(barSer);
+    }
     close();
 }
 
 // слот обработки выбора из выпадающего списка месяцев
-void Graphic::choiseMon(int number)
+// наполняет серию в зависимости от выбора даты
+void Graphic::choiseMon(int dateIdx)
 {
-    qDebug() << number << ": " << months.at(number);
+    QDate date = statYearOfDay.begin().key();  // начальная дата из получ. данных
+
+    date = date.addMonths(dateIdx);   // текущая дата выбрана из comboBox
+    //qDebug() << date;
+
+    // итератор на начало месяца
+    auto itBeginMonth = statYearOfDay.find(date);
+    // итератор на след. месяц
+    auto itEndMonth = statYearOfDay.find(date.addMonths(1));
+    // если серия не пустая - очистить данные
+    if (lineSer->count()){
+        lineSer->clear();
+    }
+
+    for (auto it(itBeginMonth); it != itEndMonth; ++it){
+        //qDebug() << it.key() << "\t" << it.value();
+        lineSer->append(it.key().day(), it.value());
+    }
+}
+
+// слот переключения вкладки tabWidget
+// или click по кнопке "График" на главном окне
+void Graphic::choiceTab(int tabIdx)
+{
+    if (tabIdx == TabYear){
+        if (barSer->count() == 0){
+            emit sig_requestData(tabIdx);
+        }
+        else{
+            chartPrepear();
+        }
+    }
+    else if (tabIdx == TabMonth){
+        if (lineSer->count() == 0){
+            emit sig_requestData(tabIdx);
+        }else{
+            chartPrepear();
+        }
+    }
 }

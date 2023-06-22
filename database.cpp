@@ -5,9 +5,6 @@ DataBase::DataBase(const QString &driver, QObject *parent)
 {
     db = new QSqlDatabase();
     addDataBase(driver);
-//    for (auto& m : model){
-//        m = nullptr;
-//    }
 }
 
 DataBase::~DataBase()

@@ -29,20 +29,17 @@ public:
     ~Graphic();
 
 
-    void addDataToLine(QVector<double> x, QVector<double> y);
-    void addDataToBar(QMap<QDate, int> &statistic);
-    void clearLine();
-    void updateLine();
-    void clearBar();
-    void updateBar();
+    void addDataToLine(QMap<QDate, int> &statistic, QString &airportName);
+    void addDataToBar(QMap<QDate, int> &statistic, QString &airportName);
     int getCurrTab();
 
 public slots:
     void chartPrepear();
+    void choiceTab(int tabIdx);
 
 private slots:
     void clikedClose();
-    void choiseMon(int number);
+    void choiseMon(int dateIdx);
 
 private:
     Ui::Graphic *ui;
@@ -52,7 +49,7 @@ private:
 
     QBarSeries *barSer;
     QLineSeries *lineSer;
-    const QStringList months{
+    const QStringList MONTH_RUS{
         "Январь",
         "Февраль",
         "Март",
@@ -65,6 +62,8 @@ private:
         "Октябрь",
         "Ноябрь",
         "Декабрь" };
+    QMap<QDate, int> statYearOfDay;
+    QString airportName;
 
 signals:
     void sig_requestData(int currTab);

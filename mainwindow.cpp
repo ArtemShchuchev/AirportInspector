@@ -16,19 +16,25 @@ MainWindow::MainWindow(QWidget *parent)
     db = new DataBase(setup.getDbDriver(), this);
 
     // сигналы
+    // Получение статуса соединения с БД
     connect(db, &DataBase::sig_SendStatusConnection, this, &MainWindow::receiveStatusConnectionToDB);
+    // Ролучение статуса запроса к БД
     connect(db, &DataBase::sig_SendStatusRequest, this, &MainWindow::receiveStatusRequestToDB);
+    // переключение РадиоКнопки "Прилет"
     connect(ui->rb_in, &QRadioButton::toggled, this, [&]{
         ui->lb_data->setText("Дата прибытия");
         ui->lb_choiceAirp->setText("Аэропорт прибытия"); });
+    // переключение РадиоКнопки "Вылет"
     connect(ui->rb_out, &QRadioButton::toggled, this, [&]{
         ui->lb_data->setText("Дата вылета");
         ui->lb_choiceAirp->setText("Аэропорт отбытия"); });
+    // Клик покнопке "Получить расписание рейсов"
     connect(ui->pb_reciveRace, &QPushButton::clicked, this, &MainWindow::reciveFlightSchedule);
+    // Клик покнопке "График загруженности"
     connect(ui->pb_busyAirport, &QPushButton::clicked, this, [&]{
         int tab = graphic->getCurrTab();
-        resiveRequestData(tab);
-    });
+        graphic->choiceTab(tab); });
+    // Получение запроса к БД
     connect(graphic, &Graphic::sig_requestData, this, &MainWindow::resiveRequestData);
 
     // Первоначальная настройка виджетов ПИ
@@ -105,24 +111,39 @@ void MainWindow::ScreenDataFromDB()
             statistic.insert(key, data);
         }
 
-        graphic->addDataToBar(statistic);
-        graphic->chartPrepear();
-
-//        auto it = statistic.begin();
-//        auto endit = statistic.end();
-//        for ( ; it != endit; ++it){
-//            qDebug() << it.key() << " : " << it.value();
-//        }
-
-//        for (const auto& s : statistic){
-//            qDebug() << s;
-//        }
-
+        auto idx = ui->cb_Airport->currentIndex();
+        QString name = ui->cb_Airport->itemText(idx);
+        graphic->addDataToBar(statistic, name);
+        //graphic->chartPrepear();
+        int tab = graphic->getCurrTab();
+        graphic->choiceTab(tab);
         break;
     }
 
     case requestStatisticEveryDay:
+    {
+        // 365 строчек: кол-во полетов, дата(год-мес-день) - с 2016-09-01
+        QMap<QDate, int> statistic;
+        int rowMax(model->rowCount());
+
+        for (int row(0); row < rowMax; ++row){
+            auto keyIdx = model->index(row, 1);
+            auto dataIdx = model->index(row, 0);
+
+            QDate key = model->data(keyIdx).toDate();
+            int data = model->data(dataIdx).toInt();
+
+            statistic.insert(key, data);
+        }
+
+        auto idx = ui->cb_Airport->currentIndex();
+        QString name = ui->cb_Airport->itemText(idx);
+        graphic->addDataToLine(statistic, name);
+        //graphic->chartPrepear();
+        int tab = graphic->getCurrTab();
+        graphic->choiceTab(tab);
         break;
+    }
 
     default:
         break;
