@@ -38,8 +38,8 @@ public slots:
     void choiceTab(int tabIdx);
 
 private slots:
-    void clikedClose();
-    void choiseMon(int dateIdx);
+    void closeGraphicWindow();
+    void choiseMonth(int dateIdx);
 
 private:
     Ui::Graphic *ui;
@@ -49,6 +49,10 @@ private:
 
     QBarSeries *barSer;
     QLineSeries *lineSer;
+
+    QValueAxis *axisX;
+    QValueAxis *axisY;
+
     const QStringList MONTH_RUS{
         "Январь",
         "Февраль",
@@ -64,6 +68,9 @@ private:
         "Декабрь" };
     QMap<QDate, int> statYearOfDay;
     QString airportName;
+    QList<QMap<QDate, int>::ConstIterator> listDataIt;
+
+    void closeEvent(QCloseEvent *event) override;
 
 signals:
     void sig_requestData(int currTab);

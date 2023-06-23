@@ -110,11 +110,10 @@ void MainWindow::ScreenDataFromDB()
 
             statistic.insert(key, data);
         }
-
         auto idx = ui->cb_Airport->currentIndex();
         QString name = ui->cb_Airport->itemText(idx);
         graphic->addDataToBar(statistic, name);
-        //graphic->chartPrepear();
+
         int tab = graphic->getCurrTab();
         graphic->choiceTab(tab);
         break;
@@ -135,11 +134,10 @@ void MainWindow::ScreenDataFromDB()
 
             statistic.insert(key, data);
         }
-
         auto idx = ui->cb_Airport->currentIndex();
         QString name = ui->cb_Airport->itemText(idx);
         graphic->addDataToLine(statistic, name);
-        //graphic->chartPrepear();
+
         int tab = graphic->getCurrTab();
         graphic->choiceTab(tab);
         break;
