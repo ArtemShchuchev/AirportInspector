@@ -31,9 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
     // Клик покнопке "Получить расписание рейсов"
     connect(ui->pb_reciveRace, &QPushButton::clicked, this, &MainWindow::reciveFlightSchedule);
     // Клик покнопке "График загруженности"
-    connect(ui->pb_busyAirport, &QPushButton::clicked, this, [&]{
-        int tab = graphic->getCurrTab();
-        graphic->choiceTab(tab); });
+    connect(ui->pb_busyAirport, &QPushButton::clicked, graphic, &Graphic::choiceTab);
     // Получение запроса к БД
     connect(graphic, &Graphic::sig_requestData, this, &MainWindow::resiveRequestData);
 
@@ -43,6 +41,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->rb_out->toggle(); // Уст. радио-кнопку на "Вылет"
     setEnableControl(false);
     setStatusConnectToGUI(false);
+    // Разрешаем выделение строк
+    ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    // Устанавливаем режим выделения лишь одной строки в таблице
+    ui->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
+    // Устанавливаем размер колонок по содержимому
+    ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    ui->tableView->horizontalHeader()->setStretchLastSection(true);
+    ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     connectToDB();
 }
@@ -70,14 +76,6 @@ void MainWindow::ScreenDataFromDB()
         model->setHeaderData(1, Qt::Horizontal, tr("Время\nприбытия"));
         model->setHeaderData(2, Qt::Horizontal, tr("Аэропорт\nотправления"));
         ui->tableView->setModel(model);
-        // Разрешаем выделение строк
-        ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
-        // Устанавливаем режим выделения лишь одной строки в таблице
-        ui->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
-        // Устанавливаем размер колонок по содержимому
-        ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-        ui->tableView->horizontalHeader()->setStretchLastSection(true);
-        ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
         break;
 
     case requestOutAirplans:
@@ -85,46 +83,16 @@ void MainWindow::ScreenDataFromDB()
         model->setHeaderData(1, Qt::Horizontal, tr("Время\nвылета"));
         model->setHeaderData(2, Qt::Horizontal, tr("Аэропорт\nназначения"));
         ui->tableView->setModel(model);
-        // Разрешаем выделение строк
-        ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
-        // Устанавливаем режим выделения лишь одной строки в таблице
-        ui->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
-        // Устанавливаем размер колонок по содержимому
-        ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-        ui->tableView->horizontalHeader()->setStretchLastSection(true);
-        ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
         break;
 
+    // 12 строчек: кол-во полетов, дата(год-мес-день(01)) - с 2016-09-01
     case requestStatisticEveryMonth:
-    {
-        // 12 строчек: кол-во полетов, дата(год-мес-день(01)) - с 2016-09-01
-        QMap<QDate, int> statistic;
-        int rowMax(model->rowCount());
-
-        for (int row(0); row < rowMax; ++row){
-            auto keyIdx = model->index(row, 1);
-            auto dataIdx = model->index(row, 0);
-
-            QDate key = model->data(keyIdx).toDate();
-            int data = model->data(dataIdx).toInt();
-
-            statistic.insert(key, data);
-        }
-        auto idx = ui->cb_Airport->currentIndex();
-        QString name = ui->cb_Airport->itemText(idx);
-        graphic->addDataToBar(statistic, name);
-
-        int tab = graphic->getCurrTab();
-        graphic->choiceTab(tab);
-        break;
-    }
-
+    // 365 строчек: кол-во полетов, дата(год-мес-день) - с 2016-09-01
     case requestStatisticEveryDay:
     {
-        // 365 строчек: кол-во полетов, дата(год-мес-день) - с 2016-09-01
         QMap<QDate, int> statistic;
-        int rowMax(model->rowCount());
 
+        int rowMax(model->rowCount());
         for (int row(0); row < rowMax; ++row){
             auto keyIdx = model->index(row, 1);
             auto dataIdx = model->index(row, 0);
@@ -134,12 +102,12 @@ void MainWindow::ScreenDataFromDB()
 
             statistic.insert(key, data);
         }
-        auto idx = ui->cb_Airport->currentIndex();
-        QString name = ui->cb_Airport->itemText(idx);
-        graphic->addDataToLine(statistic, name);
 
-        int tab = graphic->getCurrTab();
-        graphic->choiceTab(tab);
+        QString name = ui->cb_Airport->currentText();
+        Tab idx = (reqType == requestStatisticEveryMonth) ? TabYear : TabMonth;
+        graphic->addData(idx, statistic, name);
+
+        graphic->choiceTab();
         break;
     }
 
@@ -154,16 +122,12 @@ void MainWindow::receiveStatusConnectionToDB(bool status)
 {
     setStatusConnectToGUI(status);
 
-    if(status)
-    {
-        msg->accept();
-
+    if(status){
         reqType = requestListAirports;
         auto reqDb = [&]{ db->requestToDB(reqType); };
         auto runRequest = QtConcurrent::run(reqDb);
     }
-    else
-    {
+    else{
         db->disconnectFromDataBase();
 
         msg->setIcon(QMessageBox::Critical);
@@ -180,12 +144,12 @@ void MainWindow::receiveStatusConnectionToDB(bool status)
 // пытаемся подключиться к БД
 void MainWindow::connectToDB()
 {
-    msg->setIcon(QMessageBox::Information);
-    msg->setStyleSheet("color: blue");
-    msg->setWindowTitle("Подключение к БД");
-    msg->setText("Подключаюсь...");
-    msg->setStandardButtons(QMessageBox::NoButton);
-    msg->show();
+//    msg->setIcon(QMessageBox::Information);
+//    msg->setStyleSheet("color: blue");
+//    msg->setWindowTitle("Подключение к БД");
+//    msg->setText("Подключаюсь...");
+//    msg->setStandardButtons(QMessageBox::NoButton);
+//    msg->show();
 
     auto conDb = [this]{ db->connectToDataBase(setup.getConnData()); };
     auto runConnect = QtConcurrent::run(conDb);
@@ -206,14 +170,9 @@ void MainWindow::receiveStatusRequestToDB(const QString &err)
 void MainWindow::reciveFlightSchedule()
 {
     reqType = (ui->rb_in->isChecked()) ? requestInAirplans : requestOutAirplans;
+    QString airportCode = getAirportCodeFromComboBox();
 
-    auto row = ui->cb_Airport->currentIndex();          // номер строчки из comboBox
-    auto model = ui->cb_Airport->model();               // модель из comboBox
-    auto idx = model->index(row, 1);                    // нахожу индекс, нужной ячейки (код аэропорта)
-    QString airportCode = model->data(idx).toString();  // наконец получаю код аэропорта
-
-    auto reqDb = [this](const RequestType req, const QString &str, const QDate data)
-    {
+    auto reqDb = [this](const RequestType req, const QString &str, const QDate data){
         db->requestToDB(req, str, data);
     };
     // Конкаррент - это что то тёмное! (работает как хочу...)
@@ -224,29 +183,13 @@ void MainWindow::reciveFlightSchedule()
 // принимает индекс текущей вкладки (currTab)
 void MainWindow::resiveRequestData(int currTab)
 {
-    switch (currTab) {
-    case TabYear:
-        reqType = requestStatisticEveryMonth;
-        break;
-    case TabMonth:
-        reqType = requestStatisticEveryDay;
-        break;
-    default:
-        reqType = requestNull;
-        break;
-    }
+    if (currTab == TabYear) reqType = requestStatisticEveryMonth;
+    else if (currTab == TabMonth)  reqType = requestStatisticEveryDay;
 
-    ///////////////////////////////////////////////////
+    QString airportCode = getAirportCodeFromComboBox();
+    //qDebug() << airportCode;
 
-    auto row = ui->cb_Airport->currentIndex();          // номер строчки из comboBox
-    auto model = ui->cb_Airport->model();               // модель из comboBox
-    auto idx = model->index(row, 1);                    // нахожу индекс, нужной ячейки (код аэропорта)
-    QString airportCode = model->data(idx).toString();  // наконец получаю код аэропорта
-
-    qDebug() << airportCode;
-
-    auto reqDb = [this](const RequestType req, const QString &str)
-    {
+    auto reqDb = [this](const RequestType req, const QString &str){
         db->requestToDB(req, str);
     };
     // Конкаррент - это что то тёмное! (работает как хочу...)
@@ -275,5 +218,20 @@ void MainWindow::setEnableControl(bool enable)
     ui->fr_data->setEnabled(enable);
     ui->pb_reciveRace->setEnabled(enable);
     ui->pb_busyAirport->setEnabled(enable);
+}
+
+QString MainWindow::getAirportCodeFromComboBox()
+{
+    QString airportCode;
+    if (ui->cb_Airport->count() == 0){
+        QMessageBox::critical(0, tr("Ошибка!"), "Список аэропортов пуст!",
+                              QMessageBox::StandardButton::Close);
+    }else{
+        auto row = ui->cb_Airport->currentIndex();  // номер строчки из comboBox
+        auto model = ui->cb_Airport->model();       // модель из comboBox
+        auto idx = model->index(row, 1);            // нахожу индекс, нужной ячейки (код аэропорта)
+        airportCode = model->data(idx).toString();  // наконец получаю код аэропорта
+    }
+    return airportCode;
 }
 

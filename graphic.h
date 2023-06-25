@@ -14,7 +14,7 @@ namespace Ui {
 class Graphic;
 }
 
-enum{
+enum Tab{
     TabYear,
     TabMonth
 };
@@ -27,15 +27,10 @@ class Graphic : public QWidget
 public:
     explicit Graphic(QWidget *parent = nullptr);
     ~Graphic();
-
-
-    void addDataToLine(QMap<QDate, int> &statistic, QString &airportName);
-    void addDataToBar(QMap<QDate, int> &statistic, QString &airportName);
-    int getCurrTab();
+    void addData(Tab idx, QMap<QDate, int> &statistic, QString &airportName);
 
 public slots:
-    void chartPrepear();
-    void choiceTab(int tabIdx);
+    void choiceTab();
 
 private slots:
     void closeGraphicWindow();
@@ -43,15 +38,17 @@ private slots:
 
 private:
     Ui::Graphic *ui;
-    QChart *chart;
-    QChartView *chartView;
-    QGridLayout *layout;
+    QChart *chartBar, *chartLine;
+    QChartView *viewBar, *viewLine;
 
     QBarSeries *barSer;
     QLineSeries *lineSer;
 
-    QValueAxis *axisX;
-    QValueAxis *axisY;
+    QBarSet *myBarSet;
+    QBarCategoryAxis *axisBarX;
+    QValueAxis *axisBarY;
+    QValueAxis *axisLineX;
+    QValueAxis *axisLineY;
 
     const QStringList MONTH_RUS{
         "Январь",
@@ -67,8 +64,8 @@ private:
         "Ноябрь",
         "Декабрь" };
     QMap<QDate, int> statYearOfDay;
-    QString airportName;
     QList<QMap<QDate, int>::ConstIterator> listDataIt;
+    QStringList categories;
 
     void closeEvent(QCloseEvent *event) override;
 

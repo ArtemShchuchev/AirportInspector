@@ -24,9 +24,6 @@ public:
 
     void ScreenDataFromDB();
 
-public slots:
-
-
 private slots:
     void receiveStatusConnectionToDB(bool status);
     void connectToDB();
@@ -43,5 +40,6 @@ private:
 
     void setStatusConnectToGUI(bool status);
     void setEnableControl(bool enable);
+    QString getAirportCodeFromComboBox();
 };
 #endif // MAINWINDOW_H

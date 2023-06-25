@@ -12,7 +12,6 @@ DataBase::~DataBase()
     delete db;
     for (auto& m : model){
         if (m){
-            qDebug() << "Delete: " << m;
             delete m;
         }
     }

@@ -38,7 +38,7 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
-        <widget class="QWidget" name="wid_barSeries" native="true"/>
+        <layout class="QVBoxLayout" name="layoutBar"/>
        </item>
       </layout>
      </widget>
@@ -47,6 +47,9 @@
        <string>Загруженность за месяц</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout">
+       <item row="1" column="0" colspan="2">
+        <layout class="QVBoxLayout" name="layoutLine"/>
+       </item>
        <item row="0" column="1">
         <widget class="QComboBox" name="cb_month"/>
        </item>
@@ -62,9 +65,6 @@
           </size>
          </property>
         </spacer>
-       </item>
-       <item row="1" column="0" colspan="2">
-        <widget class="QWidget" name="wid_lineSeries" native="true"/>
        </item>
       </layout>
      </widget>
