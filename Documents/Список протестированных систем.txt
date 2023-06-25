@@ -1,4 +1,7 @@
 1. 	Qt 5.14.1 (i386-little_endian-ilp32 shared (dynamic) release build; by MSVC 2017) on "windows" 
 	OS: Windows 7 Version 6.1 (Build 7601: SP 1) [winnt version 6.1.7601]
 
-2. 	
+2. 	Qt 5.15.3 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0) on "xcb" 
+    OS: Linux Mint 21.1 [linux version 5.15.0-75-generic]
+
+3.  
