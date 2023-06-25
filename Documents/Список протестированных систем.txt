@@ -2,6 +2,7 @@
 	OS: Windows 7 Version 6.1 (Build 7601: SP 1) [winnt version 6.1.7601]
 
 2. 	Qt 5.15.3 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0) on "xcb" 
-    OS: Linux Mint 21.1 [linux version 5.15.0-75-generic]
+    	OS: Linux Mint 21.1 [linux version 5.15.0-75-generic]
 
-3.  
+3.  	Qt 6.4.0 (x86_64-little_endian-llp64 shared (dynamic) release build; by MSVC 2019) on "windows"
+	 OS: Windows 10 Version 22H2 [winnt version 10.0.19045]
