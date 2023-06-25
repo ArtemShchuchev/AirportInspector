@@ -4,7 +4,9 @@
 
 Graphic::Graphic(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::Graphic)
+    ui(new Ui::Graphic),
+    axisLineX(nullptr),
+    axisLineY(nullptr)
 {
     ui->setupUi(this);
 
