@@ -69,6 +69,7 @@ const QString Setup::getDbDriver()
     const QString grName("dbDriver"),
             key("postgres");
 
+    setting->sync();
     setting->beginGroup(grName);
     bool exist = setting->contains(key);
     QString dbDriver = setting->value(key, "QPSQL").toString();
@@ -94,10 +95,12 @@ void Setup::saveGeometryWidget(const QWidget *widget)
     }
 
     setting->endGroup();
+    setting->sync();
 }
 
 void Setup::restoreGeometryWidget(QWidget *widget, const QRect &rect)
 {
+    setting->sync();
     setting->beginGroup(widget->objectName());
 
     widget->setGeometry(setting->value("geometry", rect).toRect());
