@@ -11,7 +11,7 @@ Graphic::Graphic(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    setup.restoreGeometryWidget(this, QRect(0, 0, 400, 300));
+    Setup::GetInstance()->restoreGeometryWidget(this, QRect(0, 0, 400, 300));
     setWindowModality(Qt::ApplicationModal);
     ui->cb_month->setFixedWidth(120);
     ui->tabWidget->setCurrentIndex(TabYear);
@@ -35,7 +35,7 @@ Graphic::Graphic(QWidget *parent) :
 
 Graphic::~Graphic()
 {
-    setup.saveGeometryWidget(this);
+    Setup::GetInstance()->saveGeometryWidget(this);
 
     delete chartBar;
     delete chartLine;

@@ -9,6 +9,7 @@
 #include <QWidget>
 #include <QDebug>
 #include <QDate>
+#include <mutex>
 
 
 struct ConnectData
@@ -24,20 +25,24 @@ struct ConnectData
 class Setup
 {
 private:
-    QSettings* setting;
+    static Setup * pinstance_;
+    static std::mutex mutex_;
 
+protected:
+    Setup();
+    ~Setup();
+    QSettings* setting;
     void saveDbConnData(ConnectData &dbConnData);
 
 public:
-    Setup();
-    ~Setup();
+    Setup(Setup &other) = delete;
+    void operator=(const Setup &) = delete;
+    static Setup *GetInstance();
 
     const ConnectData getConnData();
     const QString getDbDriver();
     void saveGeometryWidget(const QWidget *widget);
     void restoreGeometryWidget(QWidget *widget, const QRect &rect);
 };
-
-extern Setup setup;
 
 #endif // SETUP_H

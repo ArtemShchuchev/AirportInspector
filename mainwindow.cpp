@@ -9,11 +9,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    setup.restoreGeometryWidget(this, QRect(0, 0, 520, 330));
+    Setup::GetInstance()->restoreGeometryWidget(this, QRect(0, 0, 520, 330));
 
     msg = new QMessageBox(this);
     graphic = new Graphic();
-    db = new DataBase(setup.getDbDriver(), this);
+    db = new DataBase(Setup::GetInstance()->getDbDriver(), this);
 
     connect(db, &DataBase::sig_SendStatusConnection, this, &MainWindow::receiveStatusConnectionToDB);
     connect(db, &DataBase::sig_SendStatusRequest, this, &MainWindow::receiveStatusRequestToDB);
@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    setup.saveGeometryWidget(this);
+    Setup::GetInstance()->saveGeometryWidget(this);
 
     delete graphic;
     delete ui;
@@ -129,7 +129,7 @@ void MainWindow::receiveStatusConnectionToDB(bool status)
 
 void MainWindow::connectToDB()
 {
-    auto conDb = [this]{ db->connectToDataBase(setup.getConnData()); };
+    auto conDb = [this]{ db->connectToDataBase(Setup::GetInstance()->getConnData()); };
     auto runConnect = QtConcurrent::run(conDb);
 }
 

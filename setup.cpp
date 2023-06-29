@@ -1,6 +1,7 @@
 #include "setup.h"
 
-Setup setup;
+Setup* Setup::pinstance_{nullptr};
+std::mutex Setup::mutex_;
 
 Setup::Setup()
 {
@@ -10,6 +11,16 @@ Setup::Setup()
 Setup::~Setup()
 {
     delete setting;
+}
+
+Setup *Setup::GetInstance()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (pinstance_ == nullptr)
+    {
+        pinstance_ = new Setup();
+    }
+    return pinstance_;
 }
 
 void Setup::saveDbConnData(ConnectData &dbConnData)

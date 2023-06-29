@@ -5,9 +5,7 @@
 #include <QSqlQueryModel>
 #include <QSqlError>
 #include <QSqlDatabase>
-#include <QDebug>
 #include <QDate>
-#include <QHash>
 #include "setup.h"
 
 enum RequestType
