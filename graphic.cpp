@@ -16,8 +16,6 @@ Graphic::Graphic(QWidget *parent) :
     ui->cb_month->setFixedWidth(120);
     ui->tabWidget->setCurrentIndex(TabYear);
 
-    //barSer = new QBarSeries(this);
-
     chartBar = new QChart();
     chartLine = new QChart();
     chartBar->legend()->hide();
