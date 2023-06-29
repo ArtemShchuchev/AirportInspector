@@ -5,8 +5,9 @@
 Graphic::Graphic(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Graphic),
-    axisLineX(nullptr),
-    axisLineY(nullptr)
+    axisLineX(nullptr), axisLineY(nullptr),
+    axisBarX(nullptr), axisBarY(nullptr),
+    lineSer(nullptr), barSer(nullptr)
 {
     ui->setupUi(this);
 
@@ -15,8 +16,7 @@ Graphic::Graphic(QWidget *parent) :
     ui->cb_month->setFixedWidth(120);
     ui->tabWidget->setCurrentIndex(TabYear);
 
-    barSer = new QBarSeries(this);
-    lineSer = new QLineSeries(this);
+    //barSer = new QBarSeries(this);
 
     chartBar = new QChart();
     chartLine = new QChart();
@@ -55,9 +55,14 @@ void Graphic::addData(Tab idx, QMap<QDate, int> &statistic, QString &airportName
     switch (idx) {
     case TabYear:
     {
-        myBarSet = new QBarSet("Bar", this);
-        int max(0);
+        if (barSer == nullptr){
+            barSer = new QBarSeries(this);
+            chartBar->addSeries(barSer);
+            chartBar->setAnimationOptions(QChart::SeriesAnimations);
+        }
 
+        int max(0);
+        QBarSet *myBarSet = new QBarSet("Bar", this);
         for (auto it = statistic.begin(); it != statistic.end(); ++it){
             auto date = it.key();
             QString date_str = MONTH_RUS.at(date.month() - 1) + " " + QString::number(date.year());
@@ -69,21 +74,23 @@ void Graphic::addData(Tab idx, QMap<QDate, int> &statistic, QString &airportName
                 max = it.value();
             }
         }
-
-        chartBar->addSeries(barSer);
         barSer->append(myBarSet);
 
-        axisBarX = new QBarCategoryAxis(this);
+        if (axisBarX == nullptr){
+            axisBarX = new QBarCategoryAxis(this);
+            chartBar->addAxis(axisBarX, Qt::AlignBottom);
+            axisBarX->setLabelsAngle(270);
+        }
         axisBarX->append(categories);
-        axisBarX->setLabelsAngle(270);
-        chartBar->addAxis(axisBarX, Qt::AlignBottom);
         barSer->attachAxis(axisBarX);
 
-        axisBarY = new QValueAxis(this);
-        axisBarY->setTitleText("Кол-во прилетов/вылетов");
-        axisBarY->setLabelFormat("%u");
+        if (axisBarY == nullptr){
+            axisBarY = new QValueAxis(this);
+            chartBar->addAxis(axisBarY, Qt::AlignLeft);
+            axisBarY->setTitleText("Кол-во прилетов/вылетов");
+            axisBarY->setLabelFormat("%u");
+        }
         axisBarY->setRange(0, max);
-        chartBar->addAxis(axisBarY, Qt::AlignLeft);
         barSer->attachAxis(axisBarY);
         break;
     }
@@ -130,69 +137,69 @@ void Graphic::closeEvent(QCloseEvent *event)
 {
     event->accept();
 
-    delete axisBarY;
-    axisBarY = nullptr;
-    delete axisBarX;
-    axisBarX = nullptr;
-    delete axisLineX;
-    axisLineX = nullptr;
-    delete axisLineY;
-    axisLineY = nullptr;
-
+    categories.clear();
     listDataIt.clear();
 
     if (barSer->count()){
+        barSer->detachAxis(axisBarX);
+        barSer->detachAxis(axisBarY);
         barSer->clear();
     }
     if (lineSer->count()){
+        lineSer->detachAxis(axisLineX);
+        lineSer->detachAxis(axisLineY);
         lineSer->clear();
-    }
-    if (chartLine->series().contains(lineSer)){
-        chartLine->removeSeries(lineSer);
-    }
-    if (chartBar->series().contains(barSer)){
-        chartBar->removeSeries(barSer);
     }
 }
 
 void Graphic::choiseMonth(int dateIdx)
 {
+    if (lineSer == nullptr){
+        lineSer = new QLineSeries(this);
+        chartLine->addSeries(lineSer);
+        chartLine->setAnimationOptions(QChart::SeriesAnimations);
+    }
     if (lineSer->count()){
+        lineSer->detachAxis(axisLineX);
+        lineSer->detachAxis(axisLineY);
         lineSer->clear();
-    }
-    if (chartLine->series().contains(lineSer)){
-        chartLine->removeSeries(lineSer);
-    }
-    if (axisLineX){
-        delete axisLineX;
-    }
-    if (axisLineY){
-        delete axisLineY;
     }
 
     auto currentMonth_it = listDataIt.at(dateIdx);
     auto nextMonth_it = listDataIt.at(dateIdx + 1);
-
+    QDate date;
+    int max(0), min(MAXINT);
     while(currentMonth_it != nextMonth_it)
     {
-        lineSer->append(currentMonth_it.key().day(), currentMonth_it.value());
+        date = currentMonth_it.key();
+        int value = currentMonth_it.value();
+        lineSer->append(date.day(), value);
         ++currentMonth_it;
+        if (max < value){
+            max = value;
+        }else if (min > value){
+            min = value;
+        }
     }
 
-    chartLine->addSeries(lineSer);
-
-    axisLineX = new QValueAxis(this);
-    axisLineX->setTitleText("Числа месяца");
-    axisLineX->setLabelFormat("%u");
-    axisLineX->setTickCount(1);
-    chartLine->addAxis(axisLineX, Qt::AlignBottom);
+    if (axisLineX == nullptr){
+        axisLineX = new QValueAxis(this);
+        chartLine->addAxis(axisLineX, Qt::AlignBottom);
+        axisLineX->setTitleText("Числа месяца");
+        axisLineX->setLabelFormat("%u");
+        axisLineX->setTickCount(1);
+    }
+    axisLineX->setRange(1, date.daysInMonth());
     lineSer->attachAxis(axisLineX);
 
-    axisLineY = new QValueAxis(this);
-    axisLineY->setTitleText("Кол-во прилетов/вылетов");
-    axisLineY->setLabelFormat("%u");
-    axisLineY->setTickCount(5);
-    chartLine->addAxis(axisLineY, Qt::AlignLeft);
+    if (axisLineY == nullptr){
+        axisLineY = new QValueAxis(this);
+        chartLine->addAxis(axisLineY, Qt::AlignLeft);
+        axisLineY->setTitleText("Кол-во прилетов/вылетов");
+        axisLineY->setLabelFormat("%u");
+    }
+    axisLineY->setRange(--min, ++max);
+    axisLineY->setTickCount(max - min + 1);
     lineSer->attachAxis(axisLineY);
 }
 
@@ -200,8 +207,8 @@ void Graphic::choiceTab()
 {
     int tabIdx = ui->tabWidget->currentIndex();
 
-    if ((tabIdx == TabYear && barSer->count() == 0) ||
-            (tabIdx == TabMonth && lineSer->count() == 0))
+    if ((tabIdx == TabYear && categories.empty()) ||
+            (tabIdx == TabMonth && listDataIt.empty()))
     {
         emit sig_requestData(tabIdx);
     }

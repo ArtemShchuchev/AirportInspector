@@ -44,7 +44,6 @@ private:
     QBarSeries *barSer;
     QLineSeries *lineSer;
 
-    QBarSet *myBarSet;
     QBarCategoryAxis *axisBarX;
     QValueAxis *axisBarY;
     QValueAxis *axisLineX;
