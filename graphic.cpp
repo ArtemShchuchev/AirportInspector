@@ -11,7 +11,7 @@ Graphic::Graphic(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    Setup::GetInstance()->restoreGeometryWidget(this, QRect(0, 0, 400, 300));
+    Setup::GetInstance()->restoreGeometryWidget(this, QRect(0, 0, 500, 400));
     setWindowModality(Qt::ApplicationModal);
     ui->cb_month->setFixedWidth(120);
     ui->tabWidget->setCurrentIndex(TabYear);
@@ -143,7 +143,7 @@ void Graphic::closeEvent(QCloseEvent *event)
         barSer->detachAxis(axisBarY);
         barSer->clear();
     }
-    if (lineSer->count()){
+    if (lineSer && lineSer->count()){
         lineSer->detachAxis(axisLineX);
         lineSer->detachAxis(axisLineY);
         lineSer->clear();
