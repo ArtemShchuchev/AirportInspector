@@ -23,52 +23,28 @@ void DataBase::disconnectFromDataBase()
     db->close();
 }
 
-void DataBase::requestToDB(const RequestType reqType, const QString &airportCode, const QDate data)
+void DataBase::requestToDB(const RequestType reqType, const QString &airportCode, const QDate date)
 {
     QString request;
     switch (reqType) {
     case requestListAirports:
-        request = "SELECT airport_name->>'ru' as \"airportName\", airport_code FROM\
-                bookings.airports_data\
-                order by \"airportName\"";
+        request = req.listAirports();
         break;
 
     case requestInAirplans:
-        request = "SELECT flight_no, scheduled_arrival, ad.airport_name->>'ru' as \"Name\" from bookings.flights f\
-                JOIN bookings.airports_data ad on ad.airport_code = f.departure_airport\
-                where f.arrival_airport = '" + airportCode + "'\
-                and f.scheduled_arrival::date = date('"
-                + QString::number(data.year()) + "-"
-                + QString::number(data.month()) + "-"
-                + QString::number(data.day()) + "')\
-                order by \"Name\"";
+        request = req.inAirplans(airportCode, date);
         break;
 
     case requestOutAirplans:
-        request = "SELECT flight_no, scheduled_departure, ad.airport_name->>'ru' as \"Name\" from bookings.flights f\
-                JOIN bookings.airports_data ad on ad.airport_code = f.arrival_airport\
-                WHERE f.departure_airport = '" + airportCode + "'\
-                and f.scheduled_departure::date = date('"
-                + QString::number(data.year()) + "-"
-                + QString::number(data.month()) + "-"
-                + QString::number(data.day()) + "')\
-                order by \"Name\"";
+        request = req.outAirplans(airportCode, date);
         break;
 
     case requestStatisticEveryMonth:
-        request = "SELECT count(flight_no), date_trunc('month', scheduled_departure) as \"Month\" from bookings.flights f\
-                WHERE (scheduled_departure::date > date('2016-08-31') and\
-                scheduled_departure::date <= date('2017-08-31')) and\
-                ( departure_airport = '" + airportCode + "' or arrival_airport = '" + airportCode + "' )\
-                group by \"Month\"";
+        request = req.statisticEveryMonth(airportCode);
         break;
 
     case requestStatisticEveryDay:
-        request = "SELECT count(flight_no), date_trunc('day', scheduled_departure) as \"Day\" from bookings.flights f\
-                WHERE(scheduled_departure::date > date('2016-08-31') and\
-                scheduled_departure::date <= date('2017-08-31')) and\
-                ( departure_airport = '" + airportCode + "' or arrival_airport = '" + airportCode + "')\
-                GROUP BY \"Day\"";
+        request = req.statisticEveryDay(airportCode);
         break;
 
     default:
