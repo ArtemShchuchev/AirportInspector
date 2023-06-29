@@ -11,7 +11,6 @@
 #include <QDate>
 
 
-// Структура полей подключения к БД
 struct ConnectData
 {
     QString hostName;

@@ -29,7 +29,7 @@ const ConnectData Setup::getConnData()
 {
     bool exist;
     ConnectData dbConnData;
-    setting->sync();    // синхронизирует с фалом прикаждом обращении сюда
+    setting->sync();
     setting->beginGroup("DbConnData");
     {
         exist = (   setting->contains("hostName") &&
