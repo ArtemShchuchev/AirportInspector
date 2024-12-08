@@ -166,7 +166,7 @@ void Graphic::choiseMonth(int dateIdx)
     auto currentMonth_it = listDataIt.at(dateIdx);
     auto nextMonth_it = listDataIt.at(dateIdx + 1);
     QDate date;
-    int max(0), min(MAXINT);
+    int max(0), min((std::numeric_limits<int>::max()));
     while(currentMonth_it != nextMonth_it)
     {
         date = currentMonth_it.key();
